@@ -1,0 +1,233 @@
+name: Build & Release Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Build revision (e.g. 1, 2, 3)'
+        required: false
+        default: '1'
+        type: string
+      draft:
+        description: 'Create as draft release'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  ARMBIAN_TAG: v26.2.1
+  ARMBIAN_BOARD: luckfox-pico-mini
+  ARMBIAN_BRANCH: vendor
+  ARMBIAN_RELEASE: bookworm
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghcActions
+          sudo apt-get clean
+          df -h /
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine build number
+        id: version
+        run: |
+          source config.env
+          YEAR_MONTH=$(date +%Y.%m)
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG="${GITHUB_REF_NAME}"
+            TAG="${TAG#v}"
+            BUILD_NUMBER="${TAG}"
+          else
+            REVISION="${{ inputs.revision }}"
+            BUILD_NUMBER="${YEAR_MONTH}.${REVISION}"
+          fi
+          OUTPUT_NAME="${OUTPUT_NAME:-pyMC_Repeater_FemtoFox}"
+          FINAL_IMAGE="${OUTPUT_NAME}_${BUILD_NUMBER}"
+          echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "final_image=${FINAL_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "Build: ${FINAL_IMAGE}"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf automake bc bison build-essential ccache cpio curl \
+            device-tree-compiler dialog flex gawk gdisk git jq kmod \
+            lib32gcc-s1 libc6-dev-armhf-cross libfdt-dev libfile-fcntllock-perl \
+            libfl-dev libgmp-dev libmpc-dev libncurses-dev libpython3-dev \
+            libssl-dev libtool libudev-dev linux-headers-generic locales make \
+            mtools parted patchutils pkg-config python3 python3-dev \
+            python3-pkg-resources python3-venv rsync swig \
+            u-boot-tools unzip uuid-dev wget xxd zlib1g-dev \
+            gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi \
+            dosfstools dwarfs qemu-user-static binfmt-support \
+            psmisc uuid-runtime linux-base bsdextrautils imagemagick \
+            libbison-dev libelf-dev lz4 libusb-1.0-0-dev lsof ncurses-term \
+            pv arch-test udev tree expect colorized-logs zip \
+            pigz pbzip2 lzop zstd fdisk aria2 axel parallel rdfind binwalk \
+            libffi-dev libgnutls28-dev
+          sudo locale-gen en_US.UTF-8
+
+          if ! command -v yq &>/dev/null; then
+            sudo curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 \
+              -o /usr/local/bin/yq
+            sudo chmod +x /usr/local/bin/yq
+          fi
+
+      - name: Cache Armbian build
+        uses: actions/cache@v4
+        with:
+          path: ~/armbian-build
+          key: armbian-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}
+          restore-keys: |
+            armbian-${{ env.ARMBIAN_TAG }}-
+
+      - name: Clone Armbian build framework
+        run: |
+          BUILD_DIR="$HOME/armbian-build"
+          if [[ ! -d "${BUILD_DIR}/.git" ]]; then
+            git clone --depth 1 --branch "${ARMBIAN_TAG}" \
+              https://github.com/armbian/build.git "${BUILD_DIR}"
+          else
+            cd "${BUILD_DIR}"
+            git fetch --all --tags --force 2>/dev/null || true
+            git checkout "${ARMBIAN_TAG}" 2>/dev/null || true
+          fi
+
+      - name: Inject userpatches
+        run: |
+          BUILD_DIR="$HOME/armbian-build"
+          rm -rf "${BUILD_DIR}/userpatches" 2>/dev/null || true
+
+          mkdir -p "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/"
+          mkdir -p "${BUILD_DIR}/userpatches/overlay/etc/pymc_repeater"
+          mkdir -p "${BUILD_DIR}/userpatches/overlay/etc/systemd/system"
+          mkdir -p "${BUILD_DIR}/userpatches/overlay/etc/sudoers.d"
+          mkdir -p "${BUILD_DIR}/userpatches/overlay/usr/local/bin"
+
+          cp -r userpatches/* "${BUILD_DIR}/userpatches/" 2>/dev/null || true
+          cp scripts/*.sh "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
+          cp radio-profiles/*.json "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
+          cp config.env "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/config.env"
+
+      - name: Build Armbian image
+        run: |
+          cd "$HOME/armbian-build"
+          ./compile.sh \
+            BOARD="${ARMBIAN_BOARD}" \
+            BRANCH="${ARMBIAN_BRANCH}" \
+            RELEASE="${ARMBIAN_RELEASE}" \
+            BUILD_MINIMAL=yes \
+            BUILD_DESKTOP=no \
+            KERNEL_CONFIGURE=no \
+            KERNEL_GIT=shallow \
+            COMPRESS_OUTPUTIMAGE=sha,img
+
+      - name: Prepare release artifacts
+        id: artifacts
+        run: |
+          FINAL_IMAGE="${{ steps.version.outputs.final_image }}"
+          BUILD_DIR="$HOME/armbian-build"
+          IMG_DIR="${BUILD_DIR}/output/images"
+          DIST_DIR="${{ github.workspace }}/dist"
+          mkdir -p "${DIST_DIR}"
+
+          echo "Files in output:"
+          ls -lh "${IMG_DIR}/"
+
+          for f in "${IMG_DIR}/"Armbian*.img; do
+            [ -f "$f" ] && mv "$f" "${DIST_DIR}/${FINAL_IMAGE}.img"
+          done
+          for f in "${IMG_DIR}/"Armbian*.img.xz; do
+            [ -f "$f" ] && mv "$f" "${DIST_DIR}/${FINAL_IMAGE}.img.xz"
+          done
+
+          if [[ -f "${DIST_DIR}/${FINAL_IMAGE}.img" ]]; then
+            echo "Compressing raw image..."
+            xz -T0 -6 "${DIST_DIR}/${FINAL_IMAGE}.img"
+          fi
+
+          if [[ ! -f "${DIST_DIR}/${FINAL_IMAGE}.img.xz" ]]; then
+            echo "ERROR: No image file found"
+            exit 1
+          fi
+
+          (cd "${DIST_DIR}" && sha256sum "${FINAL_IMAGE}.img.xz" > "${FINAL_IMAGE}.sha")
+
+          echo "Artifacts:"
+          ls -lh "${DIST_DIR}/"
+
+          echo "image_file=${FINAL_IMAGE}.img.xz" >> "$GITHUB_OUTPUT"
+          echo "sha_file=${FINAL_IMAGE}.sha" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.final_image }}
+          path: dist/
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FINAL_IMAGE="${{ steps.version.outputs.final_image }}"
+          BUILD_NUMBER="${{ steps.version.outputs.build_number }}"
+          DIST_DIR="${{ github.workspace }}/dist"
+          IS_DRAFT="true"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            IS_DRAFT="${{ inputs.draft }}"
+          fi
+
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v${BUILD_NUMBER}"
+          fi
+
+          TITLE="pyMC Repeater FemtoFox ${BUILD_NUMBER}"
+
+          BODY=$(cat <<EOF
+          ## pyMC Repeater FemtoFox - Build ${BUILD_NUMBER}
+
+          **Board:** Luckfox Pico Mini
+          **OS:** Armbian Bookworm (minimal)
+          **Armbian:** ${{ env.ARMBIAN_TAG }}
+
+          ### Flashing
+          \`\`\`bash
+          xz -d ${FINAL_IMAGE}.img.xz
+          sudo dd if=${FINAL_IMAGE}.img of=/dev/sdX bs=4M status=progress
+          \`\`\`
+
+          ### Default Login
+          - Username: \`luckfox\`
+          - Password: see \`config.env\`
+
+          ### Dashboard
+          http://\\<device-ip\\>:8000
+          EOF
+          )
+
+          gh release create "${TAG}" \
+            "${DIST_DIR}/${{ steps.artifacts.outputs.image_file }}" \
+            "${DIST_DIR}/${{ steps.artifacts.outputs.sha_file }}" \
+            --title "${TITLE}" \
+            --notes "${BODY}" \
+            --draft "${IS_DRAFT}" \
+            --target "${{ github.sha }}"

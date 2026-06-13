@@ -1,0 +1,40 @@
+{
+  "hardware": {
+    "femtofox-1W-SX": {
+      "name": "FemtoFox SX1262 (1W)",
+      "bus_id": 0,
+      "cs_id": 0,
+      "cs_pin": 16,
+      "gpio_chip": 1,
+      "use_gpiod_backend": true,
+      "reset_pin": 25,
+      "busy_pin": 22,
+      "irq_pin": 23,
+      "txen_pin": -1,
+      "rxen_pin": 24,
+      "txled_pin": -1,
+      "rxled_pin": -1,
+      "tx_power": 30,
+      "use_dio3_tcxo": true,
+      "preamble_length": 17
+    },
+    "femtofox-2W-SX": {
+      "name": "FemtoFox SX1262 (2W)",
+      "bus_id": 0,
+      "cs_id": 0,
+      "cs_pin": 16,
+      "gpio_chip": 1,
+      "use_gpiod_backend": true,
+      "reset_pin": 25,
+      "busy_pin": 22,
+      "irq_pin": 23,
+      "txen_pin": -1,
+      "rxen_pin": 24,
+      "txled_pin": -1,
+      "rxled_pin": -1,
+      "tx_power": 8,
+      "use_dio2_rf": true,
+      "use_dio3_tcxo": true
+    }
+  }
+}

@@ -1,0 +1,5 @@
+armbian-build/
+.git/
+output/
+*.img
+*.img.xz

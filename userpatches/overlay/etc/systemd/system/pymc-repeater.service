@@ -1,0 +1,27 @@
+[Unit]
+Description=pyMC LoRa Mesh Repeater Daemon
+After=network-online.target pymc-first-boot.service
+Wants=network-online.target
+ConditionPathExists=/etc/pymc-first-boot-done
+
+[Service]
+User=pymc
+Group=pymc
+WorkingDirectory=/opt/pymc_repeater/pyMC_Repeater
+ExecStart=/opt/pymc_repeater/venv/bin/python -m repeater.main --config /etc/pymc_repeater/config.yaml
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pymc-repeater
+
+ProtectSystem=strict
+ReadWritePaths=/etc/pymc_repeater /var/log/pymc_repeater /var/lib/pymc_repeater /opt/pymc_repeater /tmp
+PrivateTmp=true
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target

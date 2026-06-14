@@ -6,6 +6,12 @@ Based on [Armbian](https://www.armbian.com/) build framework (v26.2.1) running D
 
 For more information about the Femtofox see [femtofox](https://github.com/femtofox/femtofox)
 
+
+Click below to download the latest release:
+
+[![Release](https://img.shields.io/github/v/release/theshaun/pyMC_Femtofox?include_prereleases)](https://github.com/theshaun/pyMC_Femtofox/releases/latest)
+
+
 ## Hardware
 
 - **Board**: FemtoFox with a Luckfox Pico Mini (Rockchip RV1103B, Cortex-A7)
@@ -15,6 +21,7 @@ For more information about the Femtofox see [femtofox](https://github.com/femtof
 
 
 ## Flashing
+
 
 ```bash
 xz -d pyMC_Repeater_FemtoFox_2026.06.1.img.xz

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-WORKSPACE=/mnt/c/GIT/test_luckfox
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="${SCRIPT_DIR}"
 LOG_FILE="${WORKSPACE}/logs/build-$(date +%Y%m%d-%H%M%S).log"
 mkdir -p "${WORKSPACE}/logs"
 exec > >(tee "${LOG_FILE}") 2>&1
@@ -108,7 +109,7 @@ echo '=== ALL DONE ==='
 ls -lh "${OUTPUT_DIR}/" 2>/dev/null || true
 
 echo '=== Copying to Windows filesystem ==='
-WIN_OUTPUT=/mnt/c/GIT/test_luckfox/output
+WIN_OUTPUT="${WORKSPACE}/output"
 mkdir -p "${WIN_OUTPUT}"
 cp -v "${OUTPUT_DIR}/"* "${WIN_OUTPUT}/" 2>/dev/null || true
 echo '=== Windows copy done ==='

@@ -21,11 +21,11 @@ Three ways to build the image locally:
 
 ```bash
 # In WSL terminal
-cd /mnt/c/GIT/test_luckfox
+cd /mnt/c/GIT/pyMC_Femtofox
 sudo bash wsl-pymc-build.sh
 ```
 
-Output: `C:\GIT\test_luckfox\output\`
+Output: `C:\GIT\pyMC_Femtofox\output\`
 
 ### Docker
 

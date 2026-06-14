@@ -155,9 +155,11 @@ jobs:
             [ -f "$f" ] && mv "$f" "${DIST_DIR}/${FINAL_IMAGE}.img.xz"
           done
 
-          if [[ -f "${DIST_DIR}/${FINAL_IMAGE}.img" ]]; then
+          if [[ -f "${DIST_DIR}/${FINAL_IMAGE}.img" && ! -f "${DIST_DIR}/${FINAL_IMAGE}.img.xz" ]]; then
             echo "Compressing raw image..."
-            xz -T0 -6 "${DIST_DIR}/${FINAL_IMAGE}.img"
+            # Compress via stdout
+            xz -T0 -6 -c "${DIST_DIR}/${FINAL_IMAGE}.img" > "${DIST_DIR}/${FINAL_IMAGE}.img.xz"
+            rm -f "${DIST_DIR}/${FINAL_IMAGE}.img"
           fi
 
           if [[ ! -f "${DIST_DIR}/${FINAL_IMAGE}.img.xz" ]]; then

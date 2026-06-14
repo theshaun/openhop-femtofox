@@ -202,12 +202,12 @@ jobs:
             TAG="v${BUILD_NUMBER}"
           fi
 
-          TITLE="pyMC Repeater FemtoFox ${BUILD_NUMBER}"
+          TITLE="pyMC Repeater for Femtofox ${BUILD_NUMBER}"
 
           BODY=$(cat <<EOF
-          ## pyMC Repeater FemtoFox - Build ${BUILD_NUMBER}
+          ## pyMC Repeater Femtofox - Build ${BUILD_NUMBER}
 
-          **Board:** Luckfox Pico Mini
+          **Board:** Femtofox (Luckfox Pico Mini)
           **OS:** Armbian Bookworm (minimal)
           **Armbian:** ${{ env.ARMBIAN_TAG }}
 
@@ -218,8 +218,8 @@ jobs:
           \`\`\`
 
           ### Default Login
-          - Username: \`luckfox\`
-          - Password: see \`config.env\`
+          - Username: \`root\`
+          - Password: \`changeme\`
 
           ### Dashboard
           http://\\<device-ip\\>:8000

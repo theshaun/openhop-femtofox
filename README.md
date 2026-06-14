@@ -13,6 +13,63 @@ For more information about the Femtofox see [femtofox](https://github.com/femtof
 - **Storage**: MicroSD card
 - **Radio**: SX1262-based LoRa modules (1W or 2W FemtoFox profiles included)
 
+
+## Flashing
+
+```bash
+xz -d pyMC_Repeater_FemtoFox_2026.06.1.img.xz
+sudo dd if=pyMC_Repeater_FemtoFox_2026.06.1.img of=/dev/sdX bs=4M status=progress
+sync
+```
+
+Windows: Use [Rufus](https://rufus.ie/) or [balenaEtcher](https://etcher.balena.io/).
+
+## First Boot
+
+1. Insert SD card and power on
+3. Login as `root` with the configured password (default is `changeme`)
+4. Armbian will prompt you to (very slowly on this first boot, be patient!):
+   - Create a user account
+   - Set timezone/locale (auto-detected)
+5. Root is locked after first login
+
+## Usage
+
+### Web Dashboard
+
+```
+http://<device-ip>:8000
+```
+
+### Service Management
+
+```bash
+sudo systemctl status pymc-repeater
+sudo systemctl restart pymc-repeater
+sudo journalctl -u pymc-repeater -f
+```
+
+### Radio Configuration
+
+Radio hardware profiles are in `/etc/pymc_repeater/radio-settings.json`:
+
+| Profile | Module | Power |
+|---------|--------|-------|
+| `femtofox-1W-SX` | SX1262 1W | 30 dBm |
+| `femtofox-2W-SX` | SX1262 2W | 8 dBm (DIO2 RF switch forcing to 33 dBm) |
+
+Main config: `/etc/pymc_repeater/config.yaml`
+
+### Serial Console
+
+- **Baud**: 115200
+- **Pins**: TX, RX, GND on UART4
+- **Voltage**: 3.3V (use USB-to-TTL adapter)
+
+> [!NOTE]
+Only basic testing has been performed. Wifi and RTC clocks etc may not work yet
+
+
 ## Build Options
 
 Three ways to build the image locally:
@@ -59,62 +116,6 @@ All build settings are in `config.env`:
 | `ARMBIAN_RELEASE` | `bookworm` | Debian release |
 | `ARMBIAN_BOARD` | `luckfox-pico-mini` | Target board |
 | `ARMBIAN_BRANCH` | `vendor` | Kernel branch |
-
-## Flashing
-
-```bash
-xz -d pyMC_Repeater_FemtoFox_2026.06.1.img.xz
-sudo dd if=pyMC_Repeater_FemtoFox_2026.06.1.img of=/dev/sdX bs=4M status=progress
-sync
-```
-
-Windows: Use [Rufus](https://rufus.ie/) or [balenaEtcher](https://etcher.balena.io/).
-
-## First Boot
-
-1. Insert SD card and power on
-3. Login as `root` with the configured password (default is `changeme`)
-4. Armbian will prompt you to:
-   - Create a user account
-   - Set timezone/locale (auto-detected)
-5. Root is locked after first login
-
-## Usage
-
-### Web Dashboard
-
-```
-http://<device-ip>:8000
-```
-
-### Service Management
-
-```bash
-sudo systemctl status pymc-repeater
-sudo systemctl restart pymc-repeater
-sudo journalctl -u pymc-repeater -f
-```
-
-### Radio Configuration
-
-Radio hardware profiles are in `/etc/pymc_repeater/radio-settings.json`:
-
-| Profile | Module | Power |
-|---------|--------|-------|
-| `femtofox-1W-SX` | SX1262 1W | 30 dBm |
-| `femtofox-2W-SX` | SX1262 2W | 8 dBm (DIO2 RF switch forcing to 33 dBm) |
-
-Main config: `/etc/pymc_repeater/config.yaml`
-
-### Serial Console
-
-- **Baud**: 115200
-- **Pins**: TX, RX, GND on UART4
-- **Voltage**: 3.3V (use USB-to-TTL adapter)
-
-
-> [!NOTE]
-Only basic testing has been performed. Wifi and RTC clocks etc may not work yet
 
 ## License
 

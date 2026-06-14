@@ -93,8 +93,17 @@ systemctl disable systemd-resolved 2>/dev/null || true
 systemctl disable NetworkManager 2>/dev/null || true
 systemctl disable NetworkManager-dispatcher 2>/dev/null || true
 systemctl disable NetworkManager-wait-online 2>/dev/null || true
-apt-get install -y --no-install-recommends ifupdown isc-dhcp-client
+apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd
 echo "eth0 MAC will be derived from the board chip ID on first boot (pymc-first-boot.sh)"
+
+echo "Configuring NTP time sync (no RTC on this board)..."
+systemctl enable systemd-timesyncd.service 2>/dev/null || true
+systemctl enable fake-hwclock.service 2>/dev/null || true
+# Stop chrony/ntp if the image shipped them; timesyncd is lighter and sufficient.
+systemctl disable chrony 2>/dev/null || true
+systemctl disable ntp 2>/dev/null || true
+# Seed fake-hwclock with the build time so the first cold boot isn't in 1970.
+date -u '+%Y-%m-%d %H:%M:%S' > /etc/fake-hwclock.data 2>/dev/null || true
 
 echo ""
 echo "[7/10] Enabling services..."

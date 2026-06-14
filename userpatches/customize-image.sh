@@ -13,6 +13,7 @@ if [[ -d /tmp/overlay ]]; then
     cp -a /tmp/overlay/. /
     chown -R root:root /etc/sudoers.d /etc/systemd/system /etc/network /etc/udev /etc/hostname /etc/pymc_repeater /usr/local/bin /usr/local/lib 2>/dev/null || true
     chmod 440 /etc/sudoers.d/* 2>/dev/null || true
+    chmod 755 /usr/local/bin/*.sh 2>/dev/null || true
 fi
 
 if [[ ! -d "${BUILD_SCRIPTS}" ]]; then
@@ -93,11 +94,7 @@ systemctl disable NetworkManager 2>/dev/null || true
 systemctl disable NetworkManager-dispatcher 2>/dev/null || true
 systemctl disable NetworkManager-wait-online 2>/dev/null || true
 apt-get install -y --no-install-recommends ifupdown isc-dhcp-client
-mac="$(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\1/' | sed 's/\(..\)/\1:/g;s/:$//')"
-if [ -n "${mac}" ] && ! grep -q "hwaddress ether ${mac}" /etc/network/interfaces; then
-    echo "Setting eth0 MAC address to ${mac}..."
-    sed -i "/iface eth0 inet dhcp/a\\    hwaddress ether ${mac}" /etc/network/interfaces
-fi
+echo "eth0 MAC will be derived from the board chip ID on first boot (pymc-first-boot.sh)"
 
 echo ""
 echo "[7/10] Enabling services..."

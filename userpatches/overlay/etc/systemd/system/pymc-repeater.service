@@ -7,8 +7,11 @@ ConditionPathExists=/etc/pymc-first-boot-done
 [Service]
 User=pymc
 Group=pymc
+Environment=MALLOC_ARENA_MAX=2
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/opt/pymc_repeater/pyMC_Repeater
-ExecStart=/opt/pymc_repeater/venv/bin/python -m repeater.main --config /etc/pymc_repeater/config.yaml
+ExecStartPre=/usr/local/bin/pymc-compile-bytecode.sh
+ExecStart=/opt/pymc_repeater/venv/bin/python -O -m repeater.main --config /etc/pymc_repeater/config.yaml
 Restart=always
 RestartSec=10
 StartLimitIntervalSec=300

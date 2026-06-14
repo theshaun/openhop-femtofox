@@ -69,6 +69,10 @@ echo "[install-pymc] Installing psutil from wheel..."
 echo "[install-pymc] Installing pyMC_Repeater and remaining dependencies..."
 "${VENV_DIR}/bin/pip" install "${INSTALL_DIR}/pyMC_Repeater[hardware]" 2>&1 || echo "[install-pymc] WARNING: pip install failed, will retry on first boot"
 
+echo "[install-pymc] Pre-compiling bytecode (avoids lazy compile on slow CPU)..."
+"${VENV_DIR}/bin/python" -m compileall -q "${VENV_DIR}/lib/python"*/site-packages "${INSTALL_DIR}/pyMC_Repeater" 2>/dev/null || \
+    "${VENV_DIR}/bin/python" -m compileall -q "${VENV_DIR}" "${INSTALL_DIR}/pyMC_Repeater" 2>/dev/null || true
+
 chown -R pymc:pymc "${INSTALL_DIR}"
 
 RADIO_SETTINGS=""

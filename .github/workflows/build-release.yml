@@ -73,7 +73,7 @@ jobs:
             python3-pkg-resources python3-venv rsync swig \
             u-boot-tools unzip uuid-dev wget xxd zlib1g-dev \
             gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi \
-            dosfstools dwarfs qemu-user-static binfmt-support \
+            dosfstools qemu-user-static binfmt-support \
             psmisc uuid-runtime linux-base bsdextrautils imagemagick \
             libbison-dev libelf-dev lz4 libusb-1.0-0-dev lsof ncurses-term \
             pv arch-test udev tree expect colorized-logs zip \

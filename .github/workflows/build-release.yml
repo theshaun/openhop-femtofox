@@ -224,10 +224,15 @@ jobs:
           EOF
           )
 
+          DRAFT_FLAG=""
+          if [[ "${IS_DRAFT}" == "true" ]]; then
+            DRAFT_FLAG="--draft"
+          fi
+
           gh release create "${TAG}" \
             "${DIST_DIR}/${{ steps.artifacts.outputs.image_file }}" \
             "${DIST_DIR}/${{ steps.artifacts.outputs.sha_file }}" \
             --title "${TITLE}" \
             --notes "${BODY}" \
-            --draft "${IS_DRAFT}" \
+            ${DRAFT_FLAG} \
             --target "${{ github.sha }}"

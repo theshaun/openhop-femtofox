@@ -88,12 +88,23 @@ bash "${BUILD_SCRIPTS}/install-pymc.sh"
 echo ""
 echo "[6/10] Configuring network..."
 ln -sf /dev/null /etc/udev/rules.d/80-net-setup-link.rules
-systemctl disable systemd-networkd 2>/dev/null || true
+# Mask (not just disable) the network managers we don't want. Armbian's
+# runtime generators re-enable systemd-networkd every boot, and socket
+# activation can still bring it up despite `disable`. Masking blocks all
+# activation paths so only ifupdown (networking.service) touches eth0.
+systemctl mask systemd-networkd.service 2>/dev/null || true
+systemctl mask systemd-networkd.socket 2>/dev/null || true
+systemctl mask systemd-networkd-wait-online.service 2>/dev/null || true
 systemctl disable systemd-resolved 2>/dev/null || true
-systemctl disable NetworkManager 2>/dev/null || true
-systemctl disable NetworkManager-dispatcher 2>/dev/null || true
-systemctl disable NetworkManager-wait-online 2>/dev/null || true
-apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd
+systemctl mask NetworkManager.service 2>/dev/null || true
+systemctl mask NetworkManager-dispatcher.service 2>/dev/null || true
+systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
+# Drop Armbian's runtime netplan generator so it can't write .network files
+# into /run/systemd/network/ that would otherwise match eth0 even with the
+# service masked.
+rm -f /lib/systemd/system-generators/*netplan* 2>/dev/null || true
+rm -f /etc/systemd/network/*.network 2>/dev/null || true
+apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools
 echo "eth0 MAC will be derived from the board chip ID on first boot (pymc-first-boot.sh)"
 
 echo "Configuring NTP time sync (no RTC on this board)..."

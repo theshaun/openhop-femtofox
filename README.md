@@ -58,7 +58,7 @@ sudo journalctl -u pymc-repeater -f
 
 ### Radio Configuration
 
-Radio hardware profiles are in `/etc/pymc_repeater/radio-settings.json`:
+Radio hardware profiles are in `/opt/pymc_repeater/pyMC_Repeater/radio-settings.json`:
 
 | Profile | Module | Power |
 |---------|--------|-------|

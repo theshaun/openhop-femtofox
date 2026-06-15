@@ -75,21 +75,22 @@ echo "[install-pymc] Pre-compiling bytecode (avoids lazy compile on slow CPU)...
 
 chown -R pymc:pymc "${INSTALL_DIR}"
 
-RADIO_SETTINGS=""
-if [[ -f "${SCRIPT_DIR}/radio-settings.json" ]]; then
-    RADIO_SETTINGS="${SCRIPT_DIR}/radio-settings.json"
-elif [[ -f "${SCRIPT_DIR}/../radio-profiles/radio-settings.json" ]]; then
-    RADIO_SETTINGS="${SCRIPT_DIR}/../radio-profiles/radio-settings.json"
+RADIO_SETTINGS="${SCRIPT_DIR}/radio-settings.json"
+
+if [[ -f "${RADIO_SETTINGS}" ]]; then
+    cp "${RADIO_SETTINGS}" "${INSTALL_DIR}/pyMC_Repeater/radio-settings.json"
+    chown pymc:pymc "${INSTALL_DIR}/pyMC_Repeater/radio-settings.json"
+    echo "[install-pymc] Installed radio-settings.json -> ${INSTALL_DIR}/pyMC_Repeater/radio-settings.json"
 fi
 
-if [[ -n "${RADIO_SETTINGS}" ]]; then
-    cp "${RADIO_SETTINGS}" /etc/pymc_repeater/radio-settings.json
-    chown pymc:pymc /etc/pymc_repeater/radio-settings.json
-    echo "[install-pymc] Installed radio-settings.json"
+if [[ -f /etc/pymc_repeater/config.yaml ]]; then
+    chown pymc:pymc /etc/pymc_repeater/config.yaml
+    chmod 640 /etc/pymc_repeater/config.yaml
+    echo "[install-pymc] Apply default config.yaml"
 fi
 
 echo "[install-pymc] Installation complete"
 echo "  Binary:  ${VENV_DIR}/bin/python -m repeater.main"
 echo "  Config:  /etc/pymc_repeater/config.yaml"
-echo "  Radio:   /etc/pymc_repeater/radio-settings.json"
+echo "  Radio:   ${INSTALL_DIR}/pyMC_Repeater/radio-settings.json"
 echo "  Data:    ${INSTALL_DIR}/pyMC_Repeater"

@@ -61,13 +61,6 @@ else
     echo "  WARNING: No scripts dir found"
 fi
 
-if [[ -d "${WORKSPACE}/radio-profiles" ]]; then
-    cp "${WORKSPACE}/radio-profiles/"*.json "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
-    echo "  Copied radio profiles"
-else
-    echo "  WARNING: No radio-profiles dir found"
-fi
-
 cat > "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/pymc-build/config.env" <<EOF
 HOSTNAME="${HOSTNAME:-pymc-repeater}"
 TIMEZONE="${TIMEZONE:-UTC}"

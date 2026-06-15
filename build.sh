@@ -64,7 +64,6 @@ ln -sf "${SCRIPT_DIR}/userpatches" "${USERPATCHES_DIR}"
 echo "Copying scripts into overlay for chroot access..."
 mkdir -p "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/pymc-build/"
 cp "${SCRIPT_DIR}/scripts/"*.sh "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/pymc-build/"
-cp "${SCRIPT_DIR}/radio-profiles/"*.json "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/pymc-build/"
 cp "${SCRIPT_DIR}/config.env" "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/pymc-build/config.env"
 
 echo ""

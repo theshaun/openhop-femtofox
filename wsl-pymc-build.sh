@@ -68,7 +68,6 @@ mkdir -p "${BUILD_DIR}/userpatches/overlay/usr/local/bin"
 
 cp -r "${WORKSPACE}/userpatches/"* "${BUILD_DIR}/userpatches/" 2>/dev/null || true
 cp "${WORKSPACE}/scripts/"*.sh "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
-cp "${WORKSPACE}/radio-profiles/"*.json "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
 cp "${WORKSPACE}/config.env" "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/config.env"
 echo '=== Phase 3 complete ==='
 

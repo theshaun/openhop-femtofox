@@ -93,11 +93,6 @@ if [[ -d \"\${WORKSPACE}/scripts\" ]]; then
     echo '  Copied scripts'
 fi
 
-if [[ -d \"\${WORKSPACE}/radio-profiles\" ]]; then
-    cp \"\${WORKSPACE}/radio-profiles/\"*.json \"\${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/\" 2>/dev/null || true
-    echo '  Copied radio profiles'
-fi
-
 cat > \"\${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/config.env\" <<'ENVEOF'
 $(cat "${SCRIPT_DIR}/config.env")
 ENVEOF

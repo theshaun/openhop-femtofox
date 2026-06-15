@@ -120,7 +120,6 @@ jobs:
 
           cp -r userpatches/* "${BUILD_DIR}/userpatches/" 2>/dev/null || true
           cp scripts/*.sh "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
-          cp radio-profiles/*.json "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
           cp config.env "${BUILD_DIR}/userpatches/overlay/usr/local/lib/pymc-build/config.env"
 
       - name: Build Armbian image

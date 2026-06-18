@@ -1,7 +1,7 @@
 [Unit]
 Description=pyMC Repeater First Boot Setup
 After=local-fs.target
-Before=sshd.service pymc-repeater.service
+Before=sshd.service pymc-repeater.service networking.service
 ConditionPathExists=!/etc/pymc-first-boot-done
 
 [Service]

@@ -136,6 +136,17 @@ systemctl disable apt-daily.timer 2>/dev/null || true
 systemctl disable apt-daily-upgrade.timer 2>/dev/null || true
 systemctl mask apt-daily.timer 2>/dev/null || true
 systemctl mask apt-daily-upgrade.timer 2>/dev/null || true
+# Armbian ships its own daily update timer + helper that bypasses the
+# standard apt-daily path. Disable and mask both the timer and the
+# oneshot service so nothing re-enables them, and neutralise the apt
+# config snippet that drives APT::Periodic from the Armbian side.
+systemctl disable armbian-apt-updates.timer 2>/dev/null || true
+systemctl mask armbian-apt-updates.timer 2>/dev/null || true
+systemctl disable armbian-apt-updates.service 2>/dev/null || true
+systemctl mask armbian-apt-updates.service 2>/dev/null || true
+rm -f /etc/apt/apt.conf.d/02-armbian-periodic 2>/dev/null || true
+echo 'APT::Periodic::Update-Package-Lists "0";' > /etc/apt/apt.conf.d/02-armbian-periodic
+echo 'APT::Periodic::Unattended-Upgrade "0";' >> /etc/apt/apt.conf.d/02-armbian-periodic
 
 chmod -x /etc/update-motd.d/15-ap-info 2>/dev/null || true
 chmod -x /etc/update-motd.d/20-ip-info 2>/dev/null || true

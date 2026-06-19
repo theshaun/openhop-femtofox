@@ -38,8 +38,14 @@ echo "127.0.1.1\t${HOSTNAME:-femtofox}" >> /etc/hosts 2>/dev/null || true
 
 echo ""
 echo "[2/10] Setting timezone and locales..."
-ln -sf "/usr/share/zoneinfo/${TIMEZONE:-UTC}" /etc/localtime
-echo "${TIMEZONE:-UTC}" > /etc/timezone
+# Hard-lock to UTC. We use the canonical POSIX name Etc/UTC (which IS
+# UTC, just named for the tzdata convention) so there's no ambiguity.
+TZ_FIXED="Etc/UTC"
+ln -sf "/usr/share/zoneinfo/${TZ_FIXED}" /etc/localtime
+echo "${TZ_FIXED}" > /etc/timezone
+# Reconfigure tzdata so the cached binary timezone data matches
+# /etc/localtime. Without this, some tools read a stale zone hash.
+dpkg-reconfigure -f noninteractive tzdata >/dev/null 2>&1 || true
 
 sed -i 's/^#\s*en_US\.UTF-8/en_US.UTF-8/' /etc/locale.gen 2>/dev/null || true
 sed -i 's/^#\s*en_AU\.UTF-8/en_AU.UTF-8/' /etc/locale.gen 2>/dev/null || true
@@ -57,9 +63,11 @@ bash "${BUILD_SCRIPTS}/setup-users.sh"
 echo "Configuring first-login flow..."
 cat > /root/.not_logged_in_yet <<FIRSTLOGIN
 PRESET_ROOT_PASSWORD="${LUCKFOX_PASSWORD:-changeme}"
-PRESET_TIMEZONE="${TIMEZONE:-UTC}"
+PRESET_TIMEZONE="Etc/UTC"
 PRESET_LOCALE="en_US.UTF-8"
-SET_LANG_BASED_ON_LOCATION=Y
+# Do NOT auto-detect timezone/locale via IP geolocation — we hard-lock
+# to UTC so the repeater logs are consistent across all boards.
+SET_LANG_BASED_ON_LOCATION=N
 FIRSTLOGIN
 
 echo "Locking root password after first-login..."
@@ -109,9 +117,11 @@ apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock
 echo "Configuring NTP time sync (no RTC on this board)..."
 systemctl enable systemd-timesyncd.service 2>/dev/null || true
 systemctl enable fake-hwclock.service 2>/dev/null || true
-# Stop chrony/ntp if the image shipped them; timesyncd is lighter and sufficient.
-systemctl disable chrony 2>/dev/null || true
-systemctl disable ntp 2>/dev/null || true
+# Mask (not just disable) chrony/ntp so no package postinst or socket
+# activation can bring them back and fight timesyncd for the clock.
+systemctl mask chrony.service 2>/dev/null || true
+systemctl mask ntp.service 2>/dev/null || true
+systemctl mask openntpd.service 2>/dev/null || true
 # Seed fake-hwclock with the build time so the first cold boot isn't in 1970.
 date -u '+%Y-%m-%d %H:%M:%S' > /etc/fake-hwclock.data 2>/dev/null || true
 

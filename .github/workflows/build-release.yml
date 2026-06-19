@@ -92,34 +92,17 @@ jobs:
             sudo chmod +x /usr/local/bin/yq
           fi
 
-      - name: Cache Armbian build framework source
-        uses: actions/cache@v4
-        with:
-          path: ~/armbian-build
-          key: armbian-src-${{ env.ARMBIAN_TAG }}
-
       - name: Cache Armbian build artifacts
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/armbian
-          key: armbian-arts-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}-${{ env.ARMBIAN_RELEASE }}
+          # ~/armbian-build is bind-mounted into the docker container, so
+          # the cache/ subdir (OCI artifacts, apt cache, git sources)
+          # persists on the host. Restoring this skips ~24 min of kernel
+          # + rootfs builds on subsequent runs.
+          path: ~/armbian-build/cache
+          key: armbian-cache-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}-${{ env.ARMBIAN_RELEASE }}
           restore-keys: |
-            armbian-arts-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}-
-
-      - name: Cache pip downloads for customize_image
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ env.ARMBIAN_RELEASE }}-armhf
-
-      - name: Cache ccache (compiler cache for kernel)
-        uses: actions/cache@v4
-        with:
-          path: ~/.ccache
-          key: ccache-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}
-          restore-keys: |
-            ccache-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-
+            armbian-cache-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}-
 
       - name: Clone Armbian build framework
         run: |
@@ -159,8 +142,16 @@ jobs:
             BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
             KERNEL_GIT=shallow \
-            USE_CCACHE=yes \
             COMPRESS_OUTPUTIMAGE=sha,img
+
+      - name: Fix cache permissions
+        # Docker leaves files in ~/armbian-build/cache root-owned with apt
+        # lock files that tar can't read. Fix ownership and remove locks
+        # so the cache post-step can save successfully.
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" "$HOME/armbian-build/cache" 2>/dev/null || true
+          find "$HOME/armbian-build/cache" -name 'lock' -delete 2>/dev/null || true
+          find "$HOME/armbian-build/cache" -name 'partial' -type d -exec rm -rf {} + 2>/dev/null || true
 
       - name: Prepare release artifacts
         id: artifacts

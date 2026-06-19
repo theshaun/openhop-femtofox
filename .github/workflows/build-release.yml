@@ -81,6 +81,11 @@ jobs:
             libffi-dev libgnutls28-dev
           sudo locale-gen en_US.UTF-8
 
+          # qemu-loongarch64 binfmt registration fails on the GitHub runner
+          # disable it to avoid build failures
+          sudo update-binfmts --disable qemu-loongarch64 2>/dev/null || true
+          sudo rm -f /usr/share/binfmts/qemu-loongarch64 2>/dev/null || true
+
           if ! command -v yq &>/dev/null; then
             sudo curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 \
               -o /usr/local/bin/yq

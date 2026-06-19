@@ -92,13 +92,34 @@ jobs:
             sudo chmod +x /usr/local/bin/yq
           fi
 
-      - name: Cache Armbian build
+      - name: Cache Armbian build framework source
         uses: actions/cache@v4
         with:
           path: ~/armbian-build
-          key: armbian-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}
+          key: armbian-src-${{ env.ARMBIAN_TAG }}
+
+      - name: Cache Armbian build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/armbian
+          key: armbian-arts-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}-${{ env.ARMBIAN_RELEASE }}
           restore-keys: |
-            armbian-${{ env.ARMBIAN_TAG }}-
+            armbian-arts-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}-
+
+      - name: Cache pip downloads for customize_image
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ env.ARMBIAN_RELEASE }}-armhf
+
+      - name: Cache ccache (compiler cache for kernel)
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}
+          restore-keys: |
+            ccache-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-
 
       - name: Clone Armbian build framework
         run: |
@@ -138,6 +159,7 @@ jobs:
             BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
             KERNEL_GIT=shallow \
+            USE_CCACHE=yes \
             COMPRESS_OUTPUTIMAGE=sha,img
 
       - name: Prepare release artifacts

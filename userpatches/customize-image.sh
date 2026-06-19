@@ -105,7 +105,6 @@ systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
 rm -f /lib/systemd/system-generators/*netplan* 2>/dev/null || true
 rm -f /etc/systemd/network/*.network 2>/dev/null || true
 apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools
-echo "eth0 MAC will be derived from the board chip ID on first boot (pymc-first-boot.sh)"
 
 echo "Configuring NTP time sync (no RTC on this board)..."
 systemctl enable systemd-timesyncd.service 2>/dev/null || true

@@ -11,6 +11,7 @@ fi
 
 derive_stable_mac() {
     local INTERFACES=/etc/network/interfaces
+    local SYS_MAC="/sys/class/net/eth0/address"
 
     # Bail out if a stable MAC is already configured.
     if grep -Eq '^[[:space:]]*hwaddress[[:space:]]+ether' "$INTERFACES" 2>/dev/null; then
@@ -18,44 +19,36 @@ derive_stable_mac() {
         return 0
     fi
 
-    # Pull the CPU serial (Rockchip exposes a 16-hex-char value on the
-    # Luckfox Pico). Fall back to /proc/cmdline on kernels that don't
-    # expose it via cpuinfo.
-    local serial=""
-    serial=$(awk '/^Serial[[:space:]]*:/ {print $3; exit}' /proc/cpuinfo 2>/dev/null)
-    if [[ -z "$serial" ]]; then
-        serial=$(grep -oE '(serialno|chipid|sid)=[0-9a-fA-F]+' /proc/cmdline 2>/dev/null \
-                 | head -n1 | cut -d= -f2)
-    fi
-    if [[ -z "$serial" ]]; then
-        echo "[first-boot] No CPU serial available; skipping MAC derivation."
+    # Grab the MAC the kernel randomly assigned to eth0 on this boot.
+    # The Rockchip driver calls eth_random_addr() at probe time (very
+    # early boot), so the interface already has a MAC by the time
+    # userspace runs. We pin that random MAC so it stays stable across
+    # reboots instead of regenerating every boot.
+    local mac=""
+    if [[ -r "$SYS_MAC" ]]; then
+        mac=$(cat "$SYS_MAC" 2>/dev/null | tr -d '[:space:]')
+    else
+        echo "[first-boot] eth0 not found (${SYS_MAC} unreadable); skipping MAC pin."
         return 0
     fi
-
-    # Derive a locally-administered MAC (a2:... prefix) from the serial.
-    # sha256 gives a uniform distribution; first 10 hex chars = 5 bytes.
-    local hash mac
-    hash=$(printf '%s' "$serial" | sha256sum | cut -c1-10)
-    mac="a2:${hash:0:2}:${hash:2:2}:${hash:4:2}:${hash:6:2}:${hash:8:2}"
 
     # Validate before writing.
     if ! [[ "$mac" =~ ^([0-9a-f]{2}:){5}[0-9a-f]{2}$ ]]; then
-        echo "[first-boot] Derived MAC '${mac}' is malformed; skipping."
+        echo "[first-boot] Read MAC '${mac}' is malformed; skipping."
         return 0
     fi
 
-    echo "[first-boot] Setting eth0 MAC to ${mac} (derived from CPU serial)."
+    echo "[first-boot] Pinning eth0 MAC to ${mac} (kernel-assigned random)."
 
     # Insert `hwaddress ether` directly under the `iface eth0 inet dhcp`
-    # stanza so ifupdown picks it up. If that stanza is missing, append a
-    # complete eth0 block.
+    # stanza so ifupdown re-applies it on every subsequent boot.
     if grep -q '^iface eth0 inet dhcp' "$INTERFACES"; then
         sed -i "/^iface eth0 inet dhcp/a\\    hwaddress ether ${mac}" "$INTERFACES"
     else
         printf '\nauto eth0\niface eth0 inet dhcp\n    hwaddress ether %s\n' "$mac" >> "$INTERFACES"
     fi
 
-    echo "[first-boot] MAC written to ${INTERFACES}; reboot to apply."
+    echo "[first-boot] MAC written to ${INTERFACES}; stable across reboots."
 }
 
 echo "[first-boot] Running first-boot setup..."

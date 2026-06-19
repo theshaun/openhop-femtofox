@@ -11,7 +11,7 @@ Environment=MALLOC_ARENA_MAX=2
 Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/opt/pymc_repeater/pyMC_Repeater
 ExecStartPre=/usr/local/bin/pymc-compile-bytecode.sh
-ExecStart=/opt/pymc_repeater/venv/bin/python -O -m repeater.main --config /etc/pymc_repeater/config.yaml
+ExecStart=/opt/pymc_repeater/venv/bin/python -OO -m repeater.main --config /etc/pymc_repeater/config.yaml
 Restart=always
 RestartSec=300
 

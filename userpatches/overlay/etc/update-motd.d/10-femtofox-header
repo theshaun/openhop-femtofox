@@ -33,6 +33,6 @@ cat <<'EOF'
                           *#-    :-=++==---=%@@@@@@#-               
                               :+**+++*#%@%%%#*+-          
 
-         pyMC Repeater FemtoFox  |  Based on Armbian Linux
+         openHop Repeater FemtoFox  |  Based on Armbian Linux
 
 EOF

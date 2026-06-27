@@ -1,0 +1,28 @@
+[Unit]
+Description=openHop LoRa Mesh Repeater Daemon
+After=network-online.target openhop-first-boot.service
+Wants=network-online.target
+ConditionPathExists=/etc/openhop-first-boot-done
+
+[Service]
+User=repeater
+Group=repeater
+Environment=MALLOC_ARENA_MAX=2
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory=/opt/openhop_repeater/openhop_repeater
+ExecStartPre=/usr/local/bin/openhop-compile-bytecode.sh
+ExecStart=/opt/openhop_repeater/venv/bin/python -OO -m repeater.main --config /etc/openhop_repeater/config.yaml
+Restart=always
+RestartSec=300
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openhop-repeater
+
+ProtectSystem=strict
+ReadWritePaths=/etc/openhop_repeater /var/log/openhop_repeater /var/lib/openhop_repeater /opt/openhop_repeater /tmp
+PrivateTmp=true
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target

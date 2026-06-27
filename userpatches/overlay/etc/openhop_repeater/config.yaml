@@ -151,7 +151,7 @@ gps:
   # File source settings (used when source: file)
   # The file may contain raw NMEA lines or JSON with a "sentences" list /
   # "last_sentence" field.
-  source_path: "/var/lib/pymc_repeater/gps_nmea.txt"
+  source_path: "/var/lib/openhop_repeater/gps_nmea.txt"
   poll_interval_seconds: 2.0
 
   # ---------------------------------------------------------------------------
@@ -352,8 +352,8 @@ identities:
 #   - null/none     (disable radio hardware; daemon starts without RF I/O)
 #
 # NOTE: This Femtofox image ships radio hardware profiles in
-# /etc/pymc_repeater/radio-settings.json (femtofox-1W-SX, femtofox-2W-SX).
-# Apply one via: sudo bash /opt/pymc_repeater/pyMC_Repeater/setup-radio-config.sh /etc/pymc_repeater
+# /etc/openhop_repeater/radio-settings.json (femtofox-1W-SX, femtofox-2W-SX).
+# Apply one via: sudo bash /opt/openhop_repeater/openhop_repeater/setup-radio-config.sh /etc/openhop_repeater
 radio_type: null
 
 # CH341 USB-to-SPI adapter settings (only used when radio_type: sx1262_ch341)
@@ -384,7 +384,7 @@ radio:
   # Use implicit header mode
   implicit_header: false
 
-# KISS modem (when radio_type: kiss). Requires pyMC_core with KISS support.
+# KISS modem (when radio_type: kiss). Requires openhop_core with KISS support.
 # kiss:
 #   port: "/dev/ttyUSB0"
 #   baud_rate: 9600
@@ -400,7 +400,7 @@ radio:
 #   # kiss_full_duplex: false    # disable carrier-sense/CSMA entirely (not recommended)
 
 # pymc_usb firmware modem over Wi-Fi/TCP (when radio_type: pymc_tcp).
-# Requires pyMC_core with the TCPLoRaRadio driver
+# Requires openhop_core with the TCPLoRaRadio driver
 # pymc_tcp:
 #   host: "pymc-3e2834.local"   # modem hostname / mDNS name / LAN IP
 #   port: 5055                  # firmware default
@@ -410,7 +410,7 @@ radio:
 #   lbt_max_attempts: 5
 
 # pymc_usb firmware modem over USB-CDC (when radio_type: pymc_usb).
-# Requires pyMC_core with the USBLoRaRadio driver
+# Requires openhop_core with the USBLoRaRadio driver
 # pymc_usb:
 #   port: "/dev/ttyACM0"        # USB-CDC device; udev rule may symlink to /dev/lora-modem
 #   baudrate: 921600            # must match firmware monitor_speed
@@ -470,8 +470,8 @@ duty_cycle:
 # Storage Configuration
 storage:
   # Directory for persistent storage files (SQLite, RRD).
-  # Use a writable path for local/dev (e.g. "./var/pymc_repeater" or "~/var/pymc_repeater").
-  storage_dir: "/var/lib/pymc_repeater"
+  # Use a writable path for local/dev (e.g. "./var/openhop_repeater" or "~/var/openhop_repeater").
+  storage_dir: "/var/lib/openhop_repeater"
 
   # Data retention settings
   retention:
@@ -504,7 +504,7 @@ mqtt_brokers:
   # format: meshcoretomqtt|letsmesh|waev|mqtt
   #   meshcoretomqtt - canonical open-source MC2MQTT topic structure
   #   letsmesh, waev - MC2MQTT family flavors (same topic structure, network-specific identity)
-  #   mqtt           - legacy pyMC_Repeater local-broker convention (custom topic, singular 'packet')
+  #   mqtt           - legacy openhop_repeater local-broker convention (custom topic, singular 'packet')
   # retain_status: true|false # Sets MQTT "retain" on status messages so they remain on the broker when disconnected. Also enforces a QOS of 1 (guaranteed delivery)
   # tls:
   #   enabled: true|false # Enable TLS. If the endpoint's certificate is self-signed, the Root CA should be added to the OS's certificate store. 
@@ -556,9 +556,9 @@ mqtt_brokers:
   #     username: repeater
   #     password: secret
 
-# pyMC_Glass control-plane integration (optional)
+# openHop-Glass control-plane integration (optional)
 glass:
-  # Enable repeater -> pyMC_Glass /inform loop
+  # Enable repeater -> openHop-Glass /inform loop
   enabled: false
 
   # Base URL of Glass backend
@@ -580,7 +580,7 @@ glass:
   api_token: ""
 
   # Where cert_renewal payloads are written
-  cert_store_dir: "/etc/pymc_repeater/glass"
+  cert_store_dir: "/etc/openhop_repeater/glass"
 
 logging:
   # Log level: DEBUG, INFO, WARNING, ERROR

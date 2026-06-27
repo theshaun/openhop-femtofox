@@ -5,7 +5,7 @@
 # after any in-place upgrade (pip install -U, git pull + pip install, etc.).
 set -euo pipefail
 
-VENV=/opt/pymc_repeater/venv
+VENV=/opt/openhop_repeater/venv
 PY="${VENV}/bin/python"
 
 # Locate the installed repeater package (path varies by Python version).
@@ -18,6 +18,6 @@ EOF
 if [[ -n "${PKG_DIR}" && -d "${PKG_DIR}" ]]; then
     exec "${PY}" -OO -m compileall -q "${PKG_DIR}"
 else
-    echo "[pymc-compile] repeater package not found, skipping" >&2
+    echo "[openhop-compile] repeater package not found, skipping" >&2
     exit 0
 fi

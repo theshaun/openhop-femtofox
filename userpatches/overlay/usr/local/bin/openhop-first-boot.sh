@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MARKER="/etc/pymc-first-boot-done"
+MARKER="/etc/openhop-first-boot-done"
 SWAP_FILE="/var/swap.img"
 
 if [[ -f "${MARKER}" ]]; then
@@ -71,25 +71,25 @@ rm -f /etc/ssh/ssh_host_*
 ssh-keygen -A
 
 echo "[first-boot] Creating required directories..."
-mkdir -p /var/log/pymc_repeater
-mkdir -p /var/lib/pymc_repeater
-mkdir -p /opt/pymc_repeater/data
-chown pymc:pymc /var/log/pymc_repeater
-chown pymc:pymc /var/lib/pymc_repeater
-chown pymc:pymc /opt/pymc_repeater/data
+mkdir -p /var/log/openhop_repeater
+mkdir -p /var/lib/openhop_repeater
+mkdir -p /opt/openhop_repeater/data
+chown repeater:repeater /var/log/openhop_repeater
+chown repeater:repeater /var/lib/openhop_repeater
+chown repeater:repeater /opt/openhop_repeater/data
 
 echo "[first-boot] Configuring stable eth0 MAC address..."
 derive_stable_mac || echo "[first-boot] MAC derivation skipped (non-fatal)"
 
-echo "[first-boot] Enabling pymc-repeater service..."
-systemctl enable pymc-repeater.service
+echo "[first-boot] Enabling openhop-repeater service..."
+systemctl enable openhop-repeater.service
 
-# Write the marker BEFORE starting pymc-repeater, because the service
-# unit has ConditionPathExists=/etc/pymc-first-boot-done. Without the
+# Write the marker BEFORE starting openhop-repeater, because the service
+# unit has ConditionPathExists=/etc/openhop-first-boot-done. Without the
 # marker in place the start call below is a no-op.
 date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}"
 echo "[first-boot] First boot setup complete. Marker written to ${MARKER}"
 
-echo "[first-boot] Starting pymc-repeater service..."
-systemctl start pymc-repeater.service
-echo "[first-boot] pymc-repeater started."
+echo "[first-boot] Starting openhop-repeater service..."
+systemctl start openhop-repeater.service
+echo "[first-boot] openhop-repeater started."

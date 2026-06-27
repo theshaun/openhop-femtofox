@@ -4,15 +4,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-IMAGE_NAME="pymc-armbian-builder"
+IMAGE_NAME="openhop-armbian-builder"
 IMAGE_TAG="latest"
-CONTAINER_NAME="pymc-build-$(date +%Y%m%d-%H%M%S)"
+CONTAINER_NAME="openhop-build-$(date +%Y%m%d-%H%M%S)"
 
 source config.env
 
 BUILD_REVISION="${BUILD_REVISION:-1}"
 BUILD_NUMBER="$(date +%Y.%m).${BUILD_REVISION}"
-OUTPUT_NAME="${OUTPUT_NAME:-pyMC_Repeater_FemtoFox}"
+OUTPUT_NAME="${OUTPUT_NAME:-openHop_Repeater_FemtoFox}"
 FINAL_IMAGE="${OUTPUT_NAME}_${BUILD_NUMBER}"
 
 echo "============================================"
@@ -38,8 +38,8 @@ docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 OUTPUT_DIR="${SCRIPT_DIR}/output"
 mkdir -p "${OUTPUT_DIR}"
 
-BUILD_VOL="pymc-armbian-build"
-CCACHE_VOL="pymc-armbian-ccache"
+BUILD_VOL="openhop-armbian-build"
+CCACHE_VOL="openhop-armbian-ccache"
 
 echo ""
 echo "[2/4] Running build inside container..."
@@ -65,8 +65,8 @@ docker run --rm \
     -e TIMEZONE="${TIMEZONE}" \
     -e LUCKFOX_PASSWORD="${LUCKFOX_PASSWORD}" \
     -e LUCKFOX_SSH_KEY="${LUCKFOX_SSH_KEY:-}" \
-    -e PYMC_REPO="${PYMC_REPO}" \
-    -e PYMC_BRANCH="${PYMC_BRANCH}" \
+    -e OPENHOP_REPO="${OPENHOP_REPO}" \
+    -e OPENHOP_BRANCH="${OPENHOP_BRANCH}" \
     -e SWAP_SIZE_MB="${SWAP_SIZE_MB}" \
     -e SWAPPINESS="${SWAPPINESS}" \
     -e BUILD_REVISION="${BUILD_REVISION}" \

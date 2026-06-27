@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ -f "${SCRIPT_DIR}/config.env" ]]; then
+    source "${SCRIPT_DIR}/config.env"
+elif [[ -f "${SCRIPT_DIR}/../config.env" ]]; then
+    source "${SCRIPT_DIR}/../config.env"
+fi
+
+OPENHOP_REPO="${OPENHOP_REPO:-https://github.com/openhop-dev/openhop_repeater.git}"
+OPENHOP_BRANCH="${OPENHOP_BRANCH:-main}"
+INSTALL_DIR="/opt/openhop_repeater"
+VENV_DIR="${INSTALL_DIR}/venv"
+
+echo "[install-openhop] Installing openHop Repeater..."
+echo "  Repo:   ${OPENHOP_REPO}"
+echo "  Branch: ${OPENHOP_BRANCH}"
+echo "  Target: ${INSTALL_DIR}"
+
+apt-get update
+
+apt-get install -y \
+    python3 python3-dev python3-venv python3-pip \
+    git libgpiod2 libgpiod-dev spi-tools \
+    build-essential swig libffi-dev \
+    python3-rrdtool librrd-dev
+
+if ! command -v python3 &>/dev/null; then
+    echo "[install-openhop] ERROR: python3 not found after install"
+    exit 1
+fi
+
+PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+echo "[install-openhop] Python version: ${PY_VERSION}"
+
+if [[ -d "${INSTALL_DIR}/openhop_repeater" ]]; then
+    echo "[install-openhop] Updating existing checkout..."
+    cd "${INSTALL_DIR}/openhop_repeater"
+    git fetch --all
+    git checkout "${OPENHOP_BRANCH}"
+    git reset --hard "origin/${OPENHOP_BRANCH}"
+else
+    echo "[install-openhop] Cloning repository..."
+    git clone --depth 1 --branch "${OPENHOP_BRANCH}" "${OPENHOP_REPO}" "${INSTALL_DIR}/openhop_repeater"
+fi
+
+cd "${INSTALL_DIR}"
+
+echo "[install-openhop] Creating Python virtual environment..."
+python3 -m venv "${VENV_DIR}"
+
+echo "[install-openhop] Upgrading pip..."
+"${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel 2>&1 || echo "[install-openhop] WARNING: pip upgrade failed"
+
+echo "[install-openhop] Installing PyNaCl from wheel..."
+"${VENV_DIR}/bin/pip" install --only-binary=:all: PyNaCl 2>&1 || echo "[install-openhop] WARNING: PyNaCl binary wheel not available, will build from source"
+
+echo "[install-openhop] Installing pycryptodome from wheel..."
+"${VENV_DIR}/bin/pip" install --only-binary=:all: pycryptodome 2>&1 || echo "[install-openhop] WARNING: pycryptodome binary wheel not available"
+
+echo "[install-openhop] Installing pyyaml from wheel..."
+"${VENV_DIR}/bin/pip" install --only-binary=:all: pyyaml 2>&1 || echo "[install-openhop] WARNING: pyyaml binary wheel not available"
+
+echo "[install-openhop] Installing psutil from wheel..."
+"${VENV_DIR}/bin/pip" install --only-binary=:all: psutil 2>&1 || echo "[install-openhop] WARNING: psutil binary wheel not available"
+
+echo "[install-openhop] Installing openHop Repeater and remaining dependencies..."
+"${VENV_DIR}/bin/pip" install "${INSTALL_DIR}/openhop_repeater[hardware]" 2>&1 || echo "[install-openhop] WARNING: pip install failed, will retry on first boot"
+
+echo "[install-openhop] Pre-compiling bytecode down to opt-2.pyc"
+"${VENV_DIR}/bin/python" -OO -m compileall -q "${VENV_DIR}/lib/python"*/site-packages "${INSTALL_DIR}/openhop_repeater" 2>/dev/null || \
+    "${VENV_DIR}/bin/python" -OO -m compileall -q "${VENV_DIR}" "${INSTALL_DIR}/openhop_repeater" 2>/dev/null || true
+
+chown -R repeater:repeater "${INSTALL_DIR}"
+
+RADIO_SETTINGS="${SCRIPT_DIR}/radio-settings.json"
+
+if [[ -f "${RADIO_SETTINGS}" ]]; then
+    cp "${RADIO_SETTINGS}" "${INSTALL_DIR}/openhop_repeater/radio-settings.json"
+    chown repeater:repeater "${INSTALL_DIR}/openhop_repeater/radio-settings.json"
+    echo "[install-openhop] Installed radio-settings.json -> ${INSTALL_DIR}/openhop_repeater/radio-settings.json"
+fi
+
+if [[ -f /etc/openhop_repeater/config.yaml ]]; then
+    chown repeater:repeater /etc/openhop_repeater/config.yaml
+    chmod 640 /etc/openhop_repeater/config.yaml
+    echo "[install-openhop] Apply default config.yaml"
+fi
+
+echo "[install-openhop] Installation complete"
+echo "  Binary:  ${VENV_DIR}/bin/python -m repeater.main"
+echo "  Config:  /etc/openhop_repeater/config.yaml"
+echo "  Radio:   ${INSTALL_DIR}/openhop_repeater/radio-settings.json"
+echo "  Data:    ${INSTALL_DIR}/openhop_repeater"

@@ -13,18 +13,18 @@ groupadd -f spi 2>/dev/null || true
 groupadd -f gpio 2>/dev/null || true
 groupadd -f dialout 2>/dev/null || true
 
-if id "pymc" &>/dev/null; then
-    echo "[setup-users] pymc user already exists, updating..."
-    usermod -aG spi,gpio,dialout pymc
+if id "repeater" &>/dev/null; then
+    echo "[setup-users] repeater user already exists, updating..."
+    usermod -aG spi,gpio,dialout repeater
 else
-    adduser --disabled-password --disabled-login --gecos "pyMC Repeater Service" --home /opt/pymc_repeater --shell /usr/sbin/nologin pymc
-    usermod -aG spi,gpio,dialout pymc
-    echo "[setup-users] Created pymc service user"
+    adduser --disabled-password --disabled-login --gecos "openHop Repeater Service" --home /opt/openhop_repeater --shell /usr/sbin/nologin repeater
+    usermod -aG spi,gpio,dialout repeater
+    echo "[setup-users] Created repeater service user"
 fi
 
-mkdir -p /opt/pymc_repeater
-chown pymc:pymc /opt/pymc_repeater
+mkdir -p /opt/openhop_repeater
+chown repeater:repeater /opt/openhop_repeater
 
 echo "[setup-users] User setup complete"
 echo "  root - enabled for first boot (password='${LUCKFOX_PASSWORD}')"
-echo "  pymc - service account, no interactive login"
+echo "  repeater - service account, no interactive login"

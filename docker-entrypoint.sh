@@ -17,7 +17,7 @@ ARMBIAN_BRANCH="${ARMBIAN_BRANCH:-vendor}"
 ARMBIAN_RELEASE="${ARMBIAN_RELEASE:-bookworm}"
 BUILD_REVISION="${BUILD_REVISION:-1}"
 BUILD_NUMBER="$(date +%Y.%m).${BUILD_REVISION}"
-OUTPUT_NAME="${OUTPUT_NAME:-pyMC_Repeater_FemtoFox}"
+OUTPUT_NAME="${OUTPUT_NAME:-openHop_Repeater_FemtoFox}"
 FINAL_IMAGE="${OUTPUT_NAME}_${BUILD_NUMBER}"
 
 echo "Configuration:"
@@ -41,8 +41,8 @@ echo "Injecting userpatches from workspace..."
 USERPATCHES_DIR="${LOCAL_BUILD}/userpatches"
 rm -rf "${USERPATCHES_DIR}" 2>/dev/null || true
 
-mkdir -p "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/pymc-build/"
-mkdir -p "${LOCAL_BUILD}/userpatches/overlay/etc/pymc_repeater"
+mkdir -p "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/openhop-build/"
+mkdir -p "${LOCAL_BUILD}/userpatches/overlay/etc/openhop_repeater"
 mkdir -p "${LOCAL_BUILD}/userpatches/overlay/etc/systemd/system"
 mkdir -p "${LOCAL_BUILD}/userpatches/overlay/etc/sudoers.d"
 mkdir -p "${LOCAL_BUILD}/userpatches/overlay/usr/local/bin"
@@ -55,19 +55,19 @@ else
 fi
 
 if [[ -d "${WORKSPACE}/scripts" ]]; then
-    cp "${WORKSPACE}/scripts/"*.sh "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/pymc-build/" 2>/dev/null || true
+    cp "${WORKSPACE}/scripts/"*.sh "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/openhop-build/" 2>/dev/null || true
     echo "  Copied scripts"
 else
     echo "  WARNING: No scripts dir found"
 fi
 
-cat > "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/pymc-build/config.env" <<EOF
-HOSTNAME="${HOSTNAME:-pymc-repeater}"
+cat > "${LOCAL_BUILD}/userpatches/overlay/usr/local/lib/openhop-build/config.env" <<EOF
+HOSTNAME="${HOSTNAME:-openhop-repeater}"
 TIMEZONE="${TIMEZONE:-UTC}"
 LUCKFOX_PASSWORD="${LUCKFOX_PASSWORD:-changeme}"
 LUCKFOX_SSH_KEY="${LUCKFOX_SSH_KEY:-}"
-PYMC_REPO="${PYMC_REPO:-https://github.com/pyMC-dev/pyMC_Repeater.git}"
-PYMC_BRANCH="${PYMC_BRANCH:-develop}"
+OPENHOP_REPO="${OPENHOP_REPO:-https://github.com/openhop-dev/openhop_repeater.git}"
+OPENHOP_BRANCH="${OPENHOP_BRANCH:-main}"
 SWAP_SIZE_MB=${SWAP_SIZE_MB:-256}
 SWAPPINESS=${SWAPPINESS:-10}
 EOF

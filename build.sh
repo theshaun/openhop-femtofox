@@ -13,14 +13,14 @@ source "${CONFIG_FILE}"
 
 BUILD_REVISION="${BUILD_REVISION:-1}"
 BUILD_NUMBER="$(date +%Y.%m).${BUILD_REVISION}"
-OUTPUT_NAME="${OUTPUT_NAME:-pyMC_Repeater_FemtoFox}"
+OUTPUT_NAME="${OUTPUT_NAME:-openHop_Repeater_FemtoFox}"
 FINAL_IMAGE="${OUTPUT_NAME}_${BUILD_NUMBER}"
 
 ARMBIAN_BUILD_DIR="${SCRIPT_DIR}/armbian-build"
 ARMBIAN_REPO="https://github.com/armbian/build.git"
 
 echo "============================================"
-echo " Luckfox Pico Mini - Armbian + pyMC_Repeater"
+echo " Luckfox Pico Mini - Armbian + openHop Repeater"
 echo " Image Builder"
 echo "============================================"
 echo ""
@@ -62,9 +62,9 @@ fi
 ln -sf "${SCRIPT_DIR}/userpatches" "${USERPATCHES_DIR}"
 
 echo "Copying scripts into overlay for chroot access..."
-mkdir -p "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/pymc-build/"
-cp "${SCRIPT_DIR}/scripts/"*.sh "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/pymc-build/"
-cp "${SCRIPT_DIR}/config.env" "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/pymc-build/config.env"
+mkdir -p "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/openhop-build/"
+cp "${SCRIPT_DIR}/scripts/"*.sh "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/openhop-build/"
+cp "${SCRIPT_DIR}/config.env" "${SCRIPT_DIR}/userpatches/overlay/usr/local/lib/openhop-build/config.env"
 
 echo ""
 echo "Starting Armbian build..."
@@ -118,7 +118,7 @@ if [[ ${BUILD_EXIT} -eq 0 ]]; then
     echo "  luckfox / ${LUCKFOX_PASSWORD}  (admin with sudo)"
     echo "  root                           (disabled)"
     echo ""
-    echo "pyMC_Repeater dashboard will be at: http://<device-ip>:8000"
+    echo "openHop Repeater dashboard will be at: http://<device-ip>:8000"
 else
     echo ""
     echo "BUILD FAILED with exit code ${BUILD_EXIT}"

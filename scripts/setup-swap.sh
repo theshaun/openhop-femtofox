@@ -30,4 +30,4 @@ echo "vm.swappiness=${SWAPPINESS}" > /etc/sysctl.d/99-swap.conf
 echo "vm.vfs_cache_pressure=50" >> /etc/sysctl.d/99-swap.conf
 
 echo "[setup-swap] Swap configured: ${SWAP_SIZE_MB}MB, swappiness=${SWAPPINESS}"
-echo "[setup-swap] Swap will be activated on first boot by pymc-first-boot.service"
+echo "[setup-swap] Swap will be activated on first boot by openhop-first-boot.service"

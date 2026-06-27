@@ -6,12 +6,12 @@ echo " customise-image.sh running in chroot"
 echo " $(date)"
 echo "============================================"
 
-BUILD_SCRIPTS="/usr/local/lib/pymc-build"
+BUILD_SCRIPTS="/usr/local/lib/openhop-build"
 
 if [[ -d /tmp/overlay ]]; then
     echo "Copying overlay files to rootfs..."
     cp -a /tmp/overlay/. /
-    chown -R root:root /etc/sudoers.d /etc/systemd/system /etc/network /etc/udev /etc/hostname /etc/pymc_repeater /usr/local/bin /usr/local/lib 2>/dev/null || true
+    chown -R root:root /etc/sudoers.d /etc/systemd/system /etc/network /etc/udev /etc/hostname /etc/openhop_repeater /usr/local/bin /usr/local/lib 2>/dev/null || true
     chmod 440 /etc/sudoers.d/* 2>/dev/null || true
     chmod 755 /usr/local/bin/*.sh 2>/dev/null || true
 fi
@@ -90,8 +90,8 @@ echo "[4/10] Configuring swap..."
 bash "${BUILD_SCRIPTS}/setup-swap.sh"
 
 echo ""
-echo "[5/10] Installing pyMC_Repeater..."
-bash "${BUILD_SCRIPTS}/install-pymc.sh"
+echo "[5/10] Installing openHop Repeater..."
+bash "${BUILD_SCRIPTS}/install-openhop.sh"
 
 echo ""
 echo "[6/10] Configuring network..."
@@ -128,9 +128,9 @@ date -u '+%Y-%m-%d %H:%M:%S' > /etc/fake-hwclock.data 2>/dev/null || true
 echo ""
 echo "[7/10] Enabling services..."
 systemctl daemon-reload
-systemctl enable pymc-repeater.service
-systemctl enable pymc-first-boot.service
-systemctl disable pymc-repeater.service 2>/dev/null || true
+systemctl enable openhop-repeater.service
+systemctl enable openhop-first-boot.service
+systemctl disable openhop-repeater.service 2>/dev/null || true
 
 echo ""
 echo "[8/10] Pre-generating SSH host keys..."

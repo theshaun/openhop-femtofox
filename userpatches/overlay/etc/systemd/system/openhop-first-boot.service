@@ -1,0 +1,17 @@
+[Unit]
+Description=openHop Repeater First Boot Setup
+After=local-fs.target
+Before=sshd.service openhop-repeater.service networking.service
+ConditionPathExists=!/etc/openhop-first-boot-done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/openhop-first-boot.sh
+RemainAfterExit=yes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openhop-first-boot
+
+[Install]
+WantedBy=multi-user.target

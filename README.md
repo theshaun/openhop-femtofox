@@ -1,6 +1,6 @@
-# pyMC_Repeater for the Femtofox
+# openHop Repeater for the Femtofox
 
-Custom Armbian Linux image builder for the **Femtofox**, preconfigured with the **pyMC_Repeater** software — a LoRa mesh repeater daemon with a web dashboard.
+Custom Armbian Linux image builder for the **Femtofox**, preconfigured with the **openHop Repeater** software — a LoRa mesh repeater daemon with a web dashboard.
 
 Based on [Armbian](https://www.armbian.com/) build framework (v26.2.1) running Debian Bookworm (minimal, vendor kernel).
 
@@ -9,7 +9,7 @@ For more information about the Femtofox see [femtofox](https://github.com/femtof
 
 Click below to download the latest release:
 
-[![Release](https://img.shields.io/github/v/release/theshaun/pyMC_Femtofox?include_prereleases)](https://github.com/theshaun/pyMC_Femtofox/releases/latest)
+[![Release](https://img.shields.io/github/v/release/theshaun/openhop-femtofox?include_prereleases)](https://github.com/theshaun/openhop-femtofox/releases/latest)
 
 
 ## Hardware
@@ -24,8 +24,8 @@ Click below to download the latest release:
 
 
 ```bash
-xz -d pyMC_Repeater_FemtoFox_2026.06.1.img.xz
-sudo dd if=pyMC_Repeater_FemtoFox_2026.06.1.img of=/dev/sdX bs=4M status=progress
+xz -d openHop_Repeater_FemtoFox_2026.06.1.img.xz
+sudo dd if=openHop_Repeater_FemtoFox_2026.06.1.img of=/dev/sdX bs=4M status=progress
 sync
 ```
 
@@ -51,21 +51,21 @@ http://<device-ip>:8000
 ### Service Management
 
 ```bash
-sudo systemctl status pymc-repeater
-sudo systemctl restart pymc-repeater
-sudo journalctl -u pymc-repeater -f
+sudo systemctl status openhop-repeater
+sudo systemctl restart openhop-repeater
+sudo journalctl -u openhop-repeater -f
 ```
 
 ### Radio Configuration
 
-Radio hardware profiles are in `/opt/pymc_repeater/pyMC_Repeater/radio-settings.json`:
+Radio hardware profiles are in `/opt/openhop_repeater/openhop_repeater/radio-settings.json`:
 
 | Profile | Module | Power |
 |---------|--------|-------|
 | `femtofox-1W-SX` | SX1262 1W | 30 dBm |
 | `femtofox-2W-SX` | SX1262 2W | 8 dBm (DIO2 RF switch forcing to 33 dBm) |
 
-Main config: `/etc/pymc_repeater/config.yaml`
+Main config: `/etc/openhop_repeater/config.yaml`
 
 ### Serial Console
 
@@ -85,11 +85,11 @@ Three ways to build the image locally:
 
 ```bash
 # In WSL terminal
-cd /mnt/c/GIT/pyMC_Femtofox
-sudo bash wsl-pymc-build.sh
+cd /mnt/c/GIT/openhop-femtofox
+sudo bash wsl-openhop-build.sh
 ```
 
-Output: `C:\GIT\pyMC_Femtofox\output\`
+Output: `C:\GIT\openhop-femtofox\output\`
 
 ### Docker
 
@@ -114,9 +114,9 @@ All build settings are in `config.env`:
 | `TIMEZONE` | `UTC` | System timezone |
 | `LUCKFOX_PASSWORD` | `changeme` | Root password for first boot |
 | `LUCKFOX_SSH_KEY` | *(empty)* | Optional SSH authorized key |
-| `PYMC_REPO` | GitHub URL | pyMC_Repeater git repository |
-| `PYMC_BRANCH` | `dev` | Branch to build from |
-| `OUTPUT_NAME` | `pyMC_Repeater_FemtoFox` | Output image name prefix |
+| `OPENHOP_REPO` | GitHub URL | openHop Repeater git repository |
+| `OPENHOP_BRANCH` | `main` | Branch to build from |
+| `OUTPUT_NAME` | `openHop_Repeater_FemtoFox` | Output image name prefix |
 | `SWAP_SIZE_MB` | `256` | Swap file size in MB |
 | `SWAPPINESS` | `10` | Kernel swappiness value |
 | `ARMBIAN_TAG` | `v26.2.1` | Armbian build framework version |
@@ -126,4 +126,4 @@ All build settings are in `config.env`:
 
 ## License
 
-pyMC_Repeater is MIT licensed. Armbian is GPL-2.0.
+openHop Repeater is MIT licensed. Armbian is GPL-2.0.

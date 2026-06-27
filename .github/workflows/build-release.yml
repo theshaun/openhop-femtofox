@@ -105,16 +105,19 @@ jobs:
             armbian-cache-${{ env.ARMBIAN_TAG }}-${{ env.ARMBIAN_BOARD }}-${{ env.ARMBIAN_BRANCH }}-
 
       - name: Clone Armbian build framework
+        # The cache step restores ~/armbian-build/cache/ (no .git), so the
+        # build dir can exist without being a git repo. In that case, init in
+        # place and fetch — don't try to clone into a non-empty directory.
         run: |
           BUILD_DIR="$HOME/armbian-build"
-          if [[ ! -d "${BUILD_DIR}/.git" ]]; then
-            git clone --depth 1 --branch "${ARMBIAN_TAG}" \
-              https://github.com/armbian/build.git "${BUILD_DIR}"
-          else
-            cd "${BUILD_DIR}"
-            git fetch --all --tags --force 2>/dev/null || true
-            git checkout "${ARMBIAN_TAG}" 2>/dev/null || true
+          mkdir -p "${BUILD_DIR}"
+          cd "${BUILD_DIR}"
+          if [[ ! -d .git ]]; then
+            git init
+            git remote add origin https://github.com/armbian/build.git
           fi
+          git fetch --depth 1 --tags --force origin "${ARMBIAN_TAG}"
+          git checkout "${ARMBIAN_TAG}"
 
       - name: Inject userpatches
         run: |

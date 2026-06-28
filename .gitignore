@@ -2,3 +2,4 @@ logs/
 output/
 .vscode/
 .ccache/
+.omo/

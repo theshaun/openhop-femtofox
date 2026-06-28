@@ -1,7 +1,7 @@
 [Unit]
 Description=openHop Repeater First Boot Setup
 After=local-fs.target
-Before=ssh.service ssh.socket sshd.service sshd.socket openhop-repeater.service networking.service
+Before=ssh.service ssh.socket openhop-repeater.service networking.service
 ConditionPathExists=!/etc/openhop-first-boot-done
 
 [Service]

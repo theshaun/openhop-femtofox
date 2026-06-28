@@ -63,6 +63,16 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
+
+          # Mask the qemu-loongarch64 binfmt BEFORE installing
+          # qemu-user-static. Its postinst runs `update-binfmts --enable`
+          # over every file in /usr/share/binfmts/, which fails on the
+          # GitHub runner (no loongarch64 kernel support) and emits a
+          # noisy warning. path-exclude prevents the file from landing
+          # in the first place, so the postinst has nothing to enable.
+          echo 'path-exclude=/usr/share/binfmts/qemu-loongarch64' \
+            | sudo tee /etc/dpkg/dpkg.cfg.d/qemu-loongarch64-exclude
+
           sudo apt-get install -y --no-install-recommends \
             autoconf automake bc bison build-essential ccache cpio curl \
             device-tree-compiler dialog flex gawk gdisk git jq kmod \
@@ -80,11 +90,6 @@ jobs:
             pigz pbzip2 lzop zstd fdisk aria2 axel parallel rdfind binwalk \
             libffi-dev libgnutls28-dev
           sudo locale-gen en_US.UTF-8
-
-          # qemu-loongarch64 binfmt registration fails on the GitHub runner
-          # disable it to avoid build failures
-          sudo update-binfmts --disable qemu-loongarch64 2>/dev/null || true
-          sudo rm -f /usr/share/binfmts/qemu-loongarch64 2>/dev/null || true
 
           if ! command -v yq &>/dev/null; then
             sudo curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 \
@@ -249,7 +254,7 @@ jobs:
           echo "sha_file=${FINAL_IMAGE}.sha" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.version.outputs.final_image }}
           path: dist/

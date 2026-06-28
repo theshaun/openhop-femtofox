@@ -53,11 +53,10 @@ derive_stable_mac() {
 
 echo "[first-boot] Running first-boot setup..."
 
-echo "[first-boot] Resizing root filesystem..."
-if command -v resize2fs &>/dev/null; then
-    ROOT_PART=$(findmnt -n -o SOURCE /)
-    resize2fs "${ROOT_PART}" 2>/dev/null || echo "[first-boot] Filesystem resize skipped (may already be max)"
-fi
+# Root filesystem resize is handled by armbian-resize-fs.service, which
+# runs earlier in boot (it's pulled in by basic.target and completes
+# before local-fs.target, which this unit is After=). Re-running resize2fs
+# here was a no-op (resize2fs detects "already max" and returns).
 
 echo "[first-boot] Activating swap..."
 if [[ -f "${SWAP_FILE}" ]]; then
@@ -106,5 +105,13 @@ date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}"
 echo "[first-boot] First boot setup complete. Marker written to ${MARKER}"
 
 echo "[first-boot] Starting openhop-repeater service..."
-systemctl start openhop-repeater.service
-echo "[first-boot] openhop-repeater started."
+# --no-block: don't wait for the repeater to reach "active" before
+# returning. The repeater's ExecStartPre (openhop-compile-bytecode.sh)
+# walks site-packages and can take minutes on the 64MB Cortex-A7. A
+# blocking start here holds openhop-first-boot.service open, which (via
+# Before=ssh.service) blocks SSH for the entire compile window — and
+# the user sees "connection refused" while eth0 is already up.
+# --no-block lets first-boot complete immediately; the repeater starts
+# in the background and SSH comes up right away.
+systemctl start --no-block openhop-repeater.service
+echo "[first-boot] openhop-repeater start triggered (non-blocking)."

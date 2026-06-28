@@ -134,6 +134,59 @@ jobs:
           cp scripts/*.sh "${BUILD_DIR}/userpatches/overlay/usr/local/lib/openhop-build/" 2>/dev/null || true
           cp config.env "${BUILD_DIR}/userpatches/overlay/usr/local/lib/openhop-build/config.env"
 
+      # Native C-extension packages (PyNaCl, pycryptodome, psutil, pyyaml,
+      # spidev) have no linux_armv7l wheels on PyPI, so pip would build them
+      # from source inside the QEMU-emulated armhf chroot (~16 min, dominated
+      # by PyNaCl at ~13 min). We pre-fetch armv7l wheels from piwheels on
+      # the fast x86_64 runner and drop them into the userpatches overlay;
+      # customize-image.sh's existing `cp -a /tmp/overlay/. /` then makes
+      # them available inside the chroot at /opt/openhop-wheels/, and
+      # install-openhop.sh installs them via --find-links.
+      - name: Cache pip wheels
+        uses: actions/cache@v4
+        with:
+          path: ~/armbian-build/userpatches/overlay/opt/openhop-wheels
+          key: pip-wheels-armv7l-cp311-${{ hashFiles('scripts/install-openhop.sh') }}
+
+      - name: Prefetch pip wheels
+        env:
+          WHEEL_DIR: ${{ github.workspace }}/wheelhouse
+        run: |
+          set -e
+          # The Cache step restores in-place at the overlay path; if it's a
+          # hit, this loop is a no-op. On a miss, fetch armv7l wheels from
+          # piwheels using the host's x86_64 pip (~30 s total) — never under
+          # QEMU. Any package piwheels lacks (or whose version is too old)
+          # silently falls through to in-chroot source build.
+          OVERLAY_WHEELS="$HOME/armbian-build/userpatches/overlay/opt/openhop-wheels"
+          mkdir -p "${OVERLAY_WHEELS}"
+
+          if compgen -G "${OVERLAY_WHEELS}/*.whl" > /dev/null; then
+            echo "Cache hit — existing wheels:"
+            ls -1 "${OVERLAY_WHEELS}"/*.whl | sed 's/^/  /'
+            exit 0
+          fi
+
+          echo "Cache miss — prefetching armv7l wheels from piwheels..."
+          python3 -m pip install --upgrade pip >/dev/null
+          for pkg in PyNaCl pycryptodome psutil pyyaml spidev; do
+            echo "  -> ${pkg}"
+            python3 -m pip download --no-deps \
+              --platform linux_armv7l \
+              --platform linux_armv6l \
+              --python-version 311 \
+              --abi cp311 \
+              --abi abi3 \
+              --implementation cp \
+              --only-binary=:all: \
+              --extra-index-url https://www.piwheels.org/simple \
+              --dest "${OVERLAY_WHEELS}" \
+              "${pkg}" 2>&1 | tail -2 || echo "     (no prebuilt wheel — will build in chroot)"
+          done
+
+          echo "Prefetched wheels:"
+          ls -1 "${OVERLAY_WHEELS}"/*.whl 2>/dev/null | sed 's/^/  /' || echo "  (none)"
+
       - name: Build Armbian image
         run: |
           cd "$HOME/armbian-build"

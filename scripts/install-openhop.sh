@@ -54,20 +54,20 @@ python3 -m venv "${VENV_DIR}"
 echo "[install-openhop] Upgrading pip..."
 "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel 2>&1 || echo "[install-openhop] WARNING: pip upgrade failed"
 
-echo "[install-openhop] Installing PyNaCl from wheel..."
-"${VENV_DIR}/bin/pip" install --only-binary=:all: PyNaCl 2>&1 || echo "[install-openhop] WARNING: PyNaCl binary wheel not available, will build from source"
+# PyPI has no linux_armv7l wheels for the native deps below, so pip would
+# fall back to sdist and C-compile them under qemu-user-static (PyNaCl alone
+# takes ~13 min). piwheels hosts prebuilt armv7l wheels, and the workflow
+# prefetches them into /opt/openhop-wheels so install is a fast local copy.
+PIP_NATIVE_FLAGS=()
+if [[ -d "/opt/openhop-wheels" ]] && ls /opt/openhop-wheels/*.whl >/dev/null 2>&1; then
+    echo "[install-openhop] Using prebuilt wheels from /opt/openhop-wheels:"
+    ls -1 /opt/openhop-wheels/*.whl | sed 's/^/  /'
+    PIP_NATIVE_FLAGS+=(--find-links=/opt/openhop-wheels)
+fi
+PIP_NATIVE_FLAGS+=(--extra-index-url=https://www.piwheels.org/simple)
 
-echo "[install-openhop] Installing pycryptodome from wheel..."
-"${VENV_DIR}/bin/pip" install --only-binary=:all: pycryptodome 2>&1 || echo "[install-openhop] WARNING: pycryptodome binary wheel not available"
-
-echo "[install-openhop] Installing pyyaml from wheel..."
-"${VENV_DIR}/bin/pip" install --only-binary=:all: pyyaml 2>&1 || echo "[install-openhop] WARNING: pyyaml binary wheel not available"
-
-echo "[install-openhop] Installing psutil from wheel..."
-"${VENV_DIR}/bin/pip" install --only-binary=:all: psutil 2>&1 || echo "[install-openhop] WARNING: psutil binary wheel not available"
-
-echo "[install-openhop] Installing openHop Repeater and remaining dependencies..."
-"${VENV_DIR}/bin/pip" install "${INSTALL_DIR}/openhop_repeater[hardware]" 2>&1 || echo "[install-openhop] WARNING: pip install failed, will retry on first boot"
+echo "[install-openhop] Installing openHop Repeater and dependencies..."
+"${VENV_DIR}/bin/pip" install "${PIP_NATIVE_FLAGS[@]}" "${INSTALL_DIR}/openhop_repeater[hardware]" 2>&1 || echo "[install-openhop] WARNING: pip install failed, will retry on first boot"
 
 echo "[install-openhop] Pre-compiling bytecode down to opt-2.pyc"
 "${VENV_DIR}/bin/python" -OO -m compileall -q "${VENV_DIR}/lib/python"*/site-packages "${INSTALL_DIR}/openhop_repeater" 2>/dev/null || \

@@ -11,8 +11,12 @@ BUILD_SCRIPTS="/usr/local/lib/openhop-build"
 if [[ -d /tmp/overlay ]]; then
     echo "Copying overlay files to rootfs..."
     cp -a /tmp/overlay/. /
-    chown -R root:root /etc/sudoers.d /etc/systemd/system /etc/network /etc/udev /etc/hostname /etc/openhop_repeater /usr/local/bin /usr/local/lib 2>/dev/null || true
+    chown -R root:root /etc/sudoers.d /etc/systemd/system /etc/polkit-1 /etc/network /etc/udev /etc/hostname /etc/openhop_repeater /usr/local/bin /usr/local/lib 2>/dev/null || true
     chmod 440 /etc/sudoers.d/* 2>/dev/null || true
+    # polkit refuses to load .rules files that are group/world-writable.
+    # Source files come from /tmp/overlay (often 0777 on NTFS-mounted
+    # build dirs), so force 0644 here or the rule silently won't apply.
+    chmod 644 /etc/polkit-1/rules.d/*.rules 2>/dev/null || true
     chmod 755 /usr/local/bin/*.sh 2>/dev/null || true
 fi
 
@@ -112,7 +116,7 @@ systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
 # service masked.
 rm -f /lib/systemd/system-generators/*netplan* 2>/dev/null || true
 rm -f /etc/systemd/network/*.network 2>/dev/null || true
-apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools
+apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools policykit-1
 
 echo "Configuring NTP time sync (no RTC on this board)..."
 systemctl enable systemd-timesyncd.service 2>/dev/null || true

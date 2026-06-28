@@ -299,6 +299,14 @@ jobs:
           - Username: \`root\`
           - Password: \`changeme\`
 
+          ## On first login
+          After logging in and creating your account it will generate locale file and run a few other steps.
+          This is very slow for the first time! 
+
+          Go make a coffee...
+          Watch some grass grow...
+          Call your parents...
+
           ### Dashboard
           http://\\<device-ip\\>:8000
           EOF

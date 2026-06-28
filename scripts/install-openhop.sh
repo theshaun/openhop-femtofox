@@ -62,21 +62,11 @@ if [[ -d "/opt/openhop-wheels" ]] && ls /opt/openhop-wheels/*.whl >/dev/null 2>&
 fi
 PIP_NATIVE_FLAGS+=(--extra-index-url=https://www.piwheels.org/simple)
 
-# --no-cache-dir: cache won't survive the chroot teardown anyway, and
-# cache writes go through qemu-user-static. PIP_DISABLE_PIP_VERSION_CHECK
-# avoids a network round-trip per pip invocation.
 echo "[install-openhop] Installing openHop Repeater and dependencies..."
 PIP_DISABLE_PIP_VERSION_CHECK=1 "${VENV_DIR}/bin/pip" install --no-cache-dir \
     "${PIP_NATIVE_FLAGS[@]}" "${INSTALL_DIR}/openhop_repeater[hardware]" \
     2>&1 || echo "[install-openhop] WARNING: pip install failed, will retry on first boot"
 
-# Pre-compile the repeater package now so the device's first boot doesn't
-# have to. openhop-compile-bytecode.sh (which also runs as ExecStartPre of
-# openhop-repeater.service) is idempotent via Python's mtime-based .pyc
-# invalidation: .pyc files written here carry the source mtime, so on the
-# device every file is a cache hit and the ExecStartPre is a near-no-op.
-# Scoped to the repeater package only — full-venv compileall under qemu
-# was the slowest line in the build; this is seconds.
 /usr/local/bin/openhop-compile-bytecode.sh || echo "[install-openhop] WARNING: pre-compile failed, will retry on first boot"
 
 chown -R repeater:repeater "${INSTALL_DIR}"

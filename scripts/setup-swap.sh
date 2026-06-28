@@ -20,7 +20,7 @@ if [[ -f "${SWAP_FILE}" ]]; then
     rm -f "${SWAP_FILE}"
 fi
 
-dd if=/dev/zero of="${SWAP_FILE}" bs=1M count=${SWAP_SIZE_MB} status=progress
+fallocate -l "${SWAP_SIZE_MB}M" "${SWAP_FILE}"
 chmod 600 "${SWAP_FILE}"
 mkswap "${SWAP_FILE}"
 

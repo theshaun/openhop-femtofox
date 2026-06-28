@@ -66,9 +66,24 @@ fi
 
 sysctl --system 2>/dev/null || true
 
-echo "[first-boot] Regenerating SSH host keys..."
-rm -f /etc/ssh/ssh_host_*
-ssh-keygen -A
+echo "[first-boot] Regenerating SSH host keys atomically..."
+(
+    set -e
+    STAGING="$(mktemp -d /etc/ssh/.hostkeys-staging.XXXXXX)"
+    trap 'rm -rf "${STAGING}"' EXIT
+
+    for kt in rsa ecdsa ed25519; do
+        ssh-keygen -q -t "${kt}" -N "" -f "${STAGING}/ssh_host_${kt}_key"
+    done
+
+    # Atomic rename into place — sshd (gated by Before=ssh.service) never
+    # observes a missing or half-written key file.
+    for kf in "${STAGING}"/ssh_host_*_key; do
+        base="$(basename "${kf}")"
+        mv -f "${kf}"     "/etc/ssh/${base}"
+        mv -f "${kf}.pub" "/etc/ssh/${base}.pub"
+    done
+)
 
 echo "[first-boot] Creating required directories..."
 mkdir -p /var/log/openhop_repeater

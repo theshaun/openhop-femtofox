@@ -107,7 +107,7 @@ ln -sf /dev/null /etc/udev/rules.d/80-net-setup-link.rules
 systemctl mask systemd-networkd.service 2>/dev/null || true
 systemctl mask systemd-networkd.socket 2>/dev/null || true
 systemctl mask systemd-networkd-wait-online.service 2>/dev/null || true
-systemctl disable systemd-resolved 2>/dev/null || true
+systemctl enable systemd-resolved.service 2>/dev/null || true
 systemctl mask NetworkManager.service 2>/dev/null || true
 systemctl mask NetworkManager-dispatcher.service 2>/dev/null || true
 systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
@@ -117,6 +117,28 @@ systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
 rm -f /lib/systemd/system-generators/*netplan* 2>/dev/null || true
 rm -f /etc/systemd/network/*.network 2>/dev/null || true
 apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools policykit-1
+
+mkdir -p /etc/dhcp/dhclient-enter-hooks.d
+cat > /etc/dhcp/dhclient-enter-hooks.d/resolved <<'DHCLIENTHOOK'
+# dhclient enter-hook: route DHCP DNS through systemd-resolved instead
+# of writing /etc/resolv.conf directly. $reason, $interface, and the
+# $new_* env vars are exported by dhclient-script before sourcing hooks.
+make_resolv_conf() {
+    :
+}
+
+case "$reason" in
+    BOUND|RENEW|REBIND|REBOOT)
+        if command -v resolvectl >/dev/null 2>&1; then
+            [ -n "$new_domain_name_servers" ] && \
+                resolvectl dns "$interface" $new_domain_name_servers 2>/dev/null || true
+            [ -n "$new_domain_name" ] && \
+                resolvectl domain "$interface" "$new_domain_name" 2>/dev/null || true
+        fi
+        ;;
+esac
+DHCLIENTHOOK
+chmod 644 /etc/dhcp/dhclient-enter-hooks.d/resolved
 
 echo "Configuring NTP time sync (no RTC on this board)..."
 systemctl enable systemd-timesyncd.service 2>/dev/null || true
@@ -185,8 +207,8 @@ rm -rf /var/tmp/*
 truncate -s 0 /var/log/syslog 2>/dev/null || true
 truncate -s 0 /var/log/auth.log 2>/dev/null || true
 
-echo "nameserver 8.8.8.8" > /etc/resolv.conf.head 2>/dev/null || true
-echo "nameserver 8.8.4.4" >> /etc/resolv.conf.head 2>/dev/null || true
+rm -f /etc/resolv.conf /etc/resolv.conf.head
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
 echo ""
 echo "============================================"

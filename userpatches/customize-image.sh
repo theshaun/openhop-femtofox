@@ -208,7 +208,12 @@ truncate -s 0 /var/log/syslog 2>/dev/null || true
 truncate -s 0 /var/log/auth.log 2>/dev/null || true
 
 rm -f /etc/resolv.conf /etc/resolv.conf.head
-ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+# Static file, not the stub symlink: the symlink dangles in the build chroot
+# (resolved isn't running there) and breaks post-customize apt-get.
+cat > /etc/resolv.conf <<'RESOLV'
+nameserver 127.0.0.53
+nameserver 8.8.8.8
+RESOLV
 
 echo ""
 echo "============================================"

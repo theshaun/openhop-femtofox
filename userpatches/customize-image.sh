@@ -107,7 +107,7 @@ ln -sf /dev/null /etc/udev/rules.d/80-net-setup-link.rules
 systemctl mask systemd-networkd.service 2>/dev/null || true
 systemctl mask systemd-networkd.socket 2>/dev/null || true
 systemctl mask systemd-networkd-wait-online.service 2>/dev/null || true
-systemctl enable systemd-resolved.service 2>/dev/null || true
+systemctl mask systemd-resolved 2>/dev/null || true
 systemctl mask NetworkManager.service 2>/dev/null || true
 systemctl mask NetworkManager-dispatcher.service 2>/dev/null || true
 systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
@@ -117,28 +117,6 @@ systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
 rm -f /lib/systemd/system-generators/*netplan* 2>/dev/null || true
 rm -f /etc/systemd/network/*.network 2>/dev/null || true
 apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools policykit-1
-
-mkdir -p /etc/dhcp/dhclient-enter-hooks.d
-cat > /etc/dhcp/dhclient-enter-hooks.d/resolved <<'DHCLIENTHOOK'
-# dhclient enter-hook: route DHCP DNS through systemd-resolved instead
-# of writing /etc/resolv.conf directly. $reason, $interface, and the
-# $new_* env vars are exported by dhclient-script before sourcing hooks.
-make_resolv_conf() {
-    :
-}
-
-case "$reason" in
-    BOUND|RENEW|REBIND|REBOOT)
-        if command -v resolvectl >/dev/null 2>&1; then
-            [ -n "$new_domain_name_servers" ] && \
-                resolvectl dns "$interface" $new_domain_name_servers 2>/dev/null || true
-            [ -n "$new_domain_name" ] && \
-                resolvectl domain "$interface" "$new_domain_name" 2>/dev/null || true
-        fi
-        ;;
-esac
-DHCLIENTHOOK
-chmod 644 /etc/dhcp/dhclient-enter-hooks.d/resolved
 
 echo "Configuring NTP time sync (no RTC on this board)..."
 systemctl enable systemd-timesyncd.service 2>/dev/null || true
@@ -179,6 +157,7 @@ systemctl disable armbian-apt-updates.timer 2>/dev/null || true
 systemctl mask armbian-apt-updates.timer 2>/dev/null || true
 systemctl disable armbian-apt-updates.service 2>/dev/null || true
 systemctl mask armbian-apt-updates.service 2>/dev/null || true
+rm -f /usr/lib/armbian/armbian-apt-updates 2>/dev/null || true
 rm -f /etc/apt/apt.conf.d/02-armbian-periodic 2>/dev/null || true
 echo 'APT::Periodic::Update-Package-Lists "0";' > /etc/apt/apt.conf.d/02-armbian-periodic
 echo 'APT::Periodic::Unattended-Upgrade "0";' >> /etc/apt/apt.conf.d/02-armbian-periodic
@@ -197,6 +176,41 @@ echo "  Remaining MOTD scripts:"
 ls -la /etc/update-motd.d/ 2>/dev/null
 
 echo ""
+echo "Configuring kernel panic + auto-reboot on lockup..."
+cat > /etc/sysctl.d/99-lockup-debug.conf <<'SYSCTL'
+kernel.hung_task_timeout_secs=60
+kernel.hung_task_panic=1
+kernel.softlockup_panic=1
+kernel.panic_on_oops=1
+kernel.panic=10
+SYSCTL
+
+echo ""
+echo "Configuring serial debug output..."
+if [ -n "${SERIAL_DEBUG:-}" ]; then
+    echo "  Console UART: ${SERIAL_DEBUG}"
+    for f in /boot/extlinux/extlinux.conf /boot/armbianEnv.txt; do
+        [ -f "$f" ] && sed -i "s|console=[a-zA-Z0-9]*,[0-9]*|console=${SERIAL_DEBUG},115200|g" "$f"
+    done
+
+    cat > /etc/systemd/system/temp-serial.service <<UNIT
+[Unit]
+Description=Log SoC temp to ${SERIAL_DEBUG}
+After=systemd-journald.service
+[Service]
+ExecStart=/bin/sh -c 'while true; do printf "[temp] %%s\n" "\$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)" > /dev/${SERIAL_DEBUG}; sleep 5; done'
+Restart=always
+RestartSec=2
+Nice=10
+[Install]
+WantedBy=multi-user.target
+UNIT
+    systemctl enable temp-serial.service 2>/dev/null || true
+else
+    echo "  SERIAL_DEBUG empty — serial debug disabled."
+fi
+
+echo ""
 echo "[10/10] Final cleanup..."
 apt-get autoremove -y
 apt-get clean
@@ -208,12 +222,12 @@ truncate -s 0 /var/log/syslog 2>/dev/null || true
 truncate -s 0 /var/log/auth.log 2>/dev/null || true
 
 rm -f /etc/resolv.conf /etc/resolv.conf.head
-# Static file, not the stub symlink: the symlink dangles in the build chroot
-# (resolved isn't running there) and breaks post-customize apt-get.
 cat > /etc/resolv.conf <<'RESOLV'
-nameserver 127.0.0.53
 nameserver 8.8.8.8
+nameserver 8.8.4.4
 RESOLV
+echo "nameserver 8.8.8.8" > /etc/resolv.conf.head
+echo "nameserver 8.8.4.4" >> /etc/resolv.conf.head
 
 echo ""
 echo "============================================"

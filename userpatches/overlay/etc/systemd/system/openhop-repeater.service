@@ -10,7 +10,6 @@ Group=repeater
 Environment=MALLOC_ARENA_MAX=2
 Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/opt/openhop_repeater/openhop_repeater
-ExecStartPre=/usr/local/bin/openhop-compile-bytecode.sh
 ExecStart=/opt/openhop_repeater/venv/bin/python -OO -m repeater.main --config /etc/openhop_repeater/config.yaml
 Restart=always
 RestartSec=300

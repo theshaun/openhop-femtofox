@@ -69,6 +69,7 @@ docker run --rm \
     -e OPENHOP_BRANCH="${OPENHOP_BRANCH}" \
     -e SWAP_SIZE_MB="${SWAP_SIZE_MB}" \
     -e SWAPPINESS="${SWAPPINESS}" \
+    -e SERIAL_DEBUG="${SERIAL_DEBUG:-}" \
     -e BUILD_REVISION="${BUILD_REVISION}" \
     -e OUTPUT_NAME="${OUTPUT_NAME}" \
     -e FINAL_IMAGE="${FINAL_IMAGE}" \

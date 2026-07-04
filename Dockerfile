@@ -58,6 +58,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         rsync \
         swig \
         u-boot-tools \
+        udev \
         unzip \
         uuid-dev \
         wget \

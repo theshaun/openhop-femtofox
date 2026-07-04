@@ -53,6 +53,14 @@ derive_stable_mac() {
 
 echo "[first-boot] Running first-boot setup..."
 
+# Armbian's post-customize hooks recreate the resolved stub symlink after
+# customize-image.sh runs, leaving a dangling link (resolved is masked).
+rm -f /etc/resolv.conf /etc/resolv.conf.head
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+echo "nameserver 8.8.8.8" > /etc/resolv.conf.head
+echo "nameserver 8.8.4.4" >> /etc/resolv.conf.head
+
 # Root filesystem resize is handled by armbian-resize-fs.service, which
 # runs earlier in boot (it's pulled in by basic.target and completes
 # before local-fs.target, which this unit is After=). Re-running resize2fs
@@ -105,13 +113,10 @@ date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}"
 echo "[first-boot] First boot setup complete. Marker written to ${MARKER}"
 
 echo "[first-boot] Starting openhop-repeater service..."
-# --no-block: don't wait for the repeater to reach "active" before
-# returning. The repeater's ExecStartPre (openhop-compile-bytecode.sh)
-# walks site-packages and can take minutes on the 64MB Cortex-A7. A
-# blocking start here holds openhop-first-boot.service open, which (via
-# Before=ssh.service) blocks SSH for the entire compile window — and
-# the user sees "connection refused" while eth0 is already up.
-# --no-block lets first-boot complete immediately; the repeater starts
-# in the background and SSH comes up right away.
+# --no-block: the repeater's Python startup on 64MB RAM can be slow
+# enough that a blocking start here holds openhop-first-boot.service
+# open, which (via Before=ssh.service) blocks SSH. --no-block lets
+# first-boot complete immediately; the repeater starts in the
+# background and SSH comes up right away.
 systemctl start --no-block openhop-repeater.service
 echo "[first-boot] openhop-repeater start triggered (non-blocking)."

@@ -67,7 +67,9 @@ PIP_DISABLE_PIP_VERSION_CHECK=1 "${VENV_DIR}/bin/pip" install --no-cache-dir \
     "${PIP_NATIVE_FLAGS[@]}" "${INSTALL_DIR}/openhop_repeater[hardware]" \
     2>&1 || echo "[install-openhop] WARNING: pip install failed, will retry on first boot"
 
-/usr/local/bin/openhop-compile-bytecode.sh || echo "[install-openhop] WARNING: pre-compile failed, will retry on first boot"
+echo "[install-openhop] Pre-compiling optimized bytecode..."
+"${VENV_DIR}/bin/python" -OO -m compileall -q "${VENV_DIR}" 2>/dev/null || \
+    echo "[install-openhop] WARNING: bytecode compile incomplete, Python will compile on first import"
 
 chown -R repeater:repeater "${INSTALL_DIR}"
 

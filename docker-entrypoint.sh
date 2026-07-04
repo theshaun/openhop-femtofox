@@ -70,8 +70,28 @@ OPENHOP_REPO="${OPENHOP_REPO:-https://github.com/openhop-dev/openhop_repeater.gi
 OPENHOP_BRANCH="${OPENHOP_BRANCH:-main}"
 SWAP_SIZE_MB=${SWAP_SIZE_MB:-256}
 SWAPPINESS=${SWAPPINESS:-10}
+SERIAL_DEBUG=${SERIAL_DEBUG:-}
 EOF
 echo "  Wrote config.env"
+
+echo ""
+echo "Starting loop partition node watcher..."
+# Docker's static /dev tmpfs has no udev/devtmpfs to create /dev/loopNpM
+# nodes when a loop device is partitioned. This watcher polls /sys/block
+# for kernel-known loop partitions and mknod's the missing device nodes,
+# so Armbian's check_loop_device() succeeds at prepare_partitions time.
+(
+    while true; do
+        for sysp in /sys/block/loop*/loop*p*; do
+            [ -d "$sysp" ] || continue
+            dev="/dev/$(basename "$sysp")"
+            [ -e "$dev" ] && continue
+            majmin=$(cat "$sysp/dev" 2>/dev/null) || continue
+            mknod "$dev" b "${majmin%%:*}" "${majmin##*:}" 2>/dev/null || true
+        done
+        sleep 1
+    done
+) &
 
 echo ""
 echo "Starting Armbian build (all I/O in container-local storage)..."

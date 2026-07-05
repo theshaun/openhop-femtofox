@@ -38,12 +38,12 @@ echo "[install-openhop] Python version: ${PY_VERSION}"
 if [[ -d "${INSTALL_DIR}/openhop_repeater" ]]; then
     echo "[install-openhop] Updating existing checkout..."
     cd "${INSTALL_DIR}/openhop_repeater"
-    git fetch --all
+    git fetch --all --tags
     git checkout "${OPENHOP_BRANCH}"
     git reset --hard "origin/${OPENHOP_BRANCH}"
 else
     echo "[install-openhop] Cloning repository..."
-    git clone --depth 1 --branch "${OPENHOP_BRANCH}" "${OPENHOP_REPO}" "${INSTALL_DIR}/openhop_repeater"
+    git clone --branch "${OPENHOP_BRANCH}" "${OPENHOP_REPO}" "${INSTALL_DIR}/openhop_repeater"
 fi
 
 cd "${INSTALL_DIR}"

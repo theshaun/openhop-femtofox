@@ -14,7 +14,7 @@
       "rxen_pin": 24,
       "txled_pin": -1,
       "rxled_pin": -1,
-      "tx_power": 30,
+      "tx_power": 22,
       "use_dio3_tcxo": true,
       "preamble_length": 17
     },

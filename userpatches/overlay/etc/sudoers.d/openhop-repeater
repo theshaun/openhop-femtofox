@@ -1,0 +1,2 @@
+# Passwordless service control for the openhop-repeater service user.
+repeater ALL=(root) NOPASSWD: /usr/bin/systemctl restart openhop-repeater, /usr/bin/systemctl restart openhop-repeater.service, /usr/bin/systemctl stop openhop-repeater, /usr/bin/systemctl stop openhop-repeater.service

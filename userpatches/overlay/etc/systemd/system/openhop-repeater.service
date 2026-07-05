@@ -19,7 +19,7 @@ StandardError=journal
 SyslogIdentifier=openhop-repeater
 
 ProtectSystem=strict
-ReadWritePaths=/etc/openhop_repeater /var/log/openhop_repeater /var/lib/openhop_repeater /opt/openhop_repeater /tmp /run/sudo
+ReadWritePaths=/etc/openhop_repeater /var/log/openhop_repeater /var/lib/openhop_repeater /opt/openhop_repeater /tmp
 PrivateTmp=true
 NoNewPrivileges=false
 

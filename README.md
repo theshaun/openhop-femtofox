@@ -24,8 +24,8 @@ Click below to download the latest release:
 
 
 ```bash
-xz -d openHop_Repeater_FemtoFox_2026.06.1.img.xz
-sudo dd if=openHop_Repeater_FemtoFox_2026.06.1.img of=/dev/sdX bs=4M status=progress
+xz -d openHop_Repeater_FemtoFox_RELEASENUM.img.xz
+sudo dd if=openHop_Repeater_FemtoFox_RELEASENUM.img of=/dev/sdX bs=4M status=progress
 sync
 ```
 
@@ -66,12 +66,6 @@ Radio hardware profiles are in `/opt/openhop_repeater/openhop_repeater/radio-set
 | `femtofox-2W-SX` | SX1262 2W | 8 dBm (DIO2 RF switch forcing to 33 dBm) |
 
 Main config: `/etc/openhop_repeater/config.yaml`
-
-### Serial Console
-
-- **Baud**: 115200
-- **Pins**: TX, RX, GND on UART4
-- **Voltage**: 3.3V (use USB-to-TTL adapter)
 
 > [!NOTE]
 Only basic testing has been performed. Wifi and RTC clocks etc may not work yet

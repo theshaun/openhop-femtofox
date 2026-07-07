@@ -116,7 +116,8 @@ systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
 # service masked.
 rm -f /lib/systemd/system-generators/*netplan* 2>/dev/null || true
 rm -f /etc/systemd/network/*.network 2>/dev/null || true
-apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools policykit-1
+apt-get install -y --no-install-recommends ifupdown isc-dhcp-client fake-hwclock systemd-timesyncd net-tools policykit-1 strace
+# strace for Mr RightUp, who is always stracing something. I think he has a strace tattoo on his arm or something, I dunno.
 
 echo "Configuring NTP time sync (no RTC on this board)..."
 systemctl enable systemd-timesyncd.service 2>/dev/null || true

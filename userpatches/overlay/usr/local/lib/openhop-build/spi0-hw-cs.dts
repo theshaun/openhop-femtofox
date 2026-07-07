@@ -1,0 +1,26 @@
+/dts-v1/;
+/plugin/;
+
+/*
+ * SPI0 hardware chip-select overlay for Femtofox 
+ *
+ * Moves the SX1262 LoRa radio's chip select from software bit-bang to
+ * kernel framework-managed GPIO CS.
+ */
+
+/ {
+	fragment@0 {
+		target-path = "/spi@ff500000";
+		__overlay__ {
+			pinctrl-0 = <0x48 0x49 0x4a>;
+			cs-gpios = <0x36 0x10 0x00>;
+		};
+	};
+
+	fragment@1 {
+		target-path = "/spi@ff500000/fbtft@0";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+};

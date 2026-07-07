@@ -25,7 +25,8 @@ apt-get install -y \
     python3 python3-dev python3-venv python3-pip \
     git libgpiod2 libgpiod-dev spi-tools \
     build-essential swig libffi-dev \
-    python3-rrdtool librrd-dev
+    python3-rrdtool librrd-dev \
+    device-tree-compiler
 
 if ! command -v python3 &>/dev/null; then
     echo "[install-openhop] ERROR: python3 not found after install"
@@ -92,6 +93,42 @@ if [[ -f /etc/openhop_repeater/config.yaml ]]; then
     chown repeater:repeater /etc/openhop_repeater/config.yaml
     chmod 640 /etc/openhop_repeater/config.yaml
     echo "[install-openhop] Apply default config.yaml"
+fi
+
+# Merges the spi0-hw-cs overlay into the board DTB so the SPI framework
+# drives CS0 via cs-gpios instead of the driver bit-banging it because RightUp wouldn't shut up about trying it.
+# I am pretty sure the guy never sleeps either, too busy thinking about all the bit-banging
+OVERLAY_DTS="${SCRIPT_DIR}/spi0-hw-cs.dts"
+DTB="/boot/dtb-$(uname -r)/rv1103g-luckfox-pico-mini.dtb"
+
+if [[ -f "$OVERLAY_DTS" && -f "$DTB" ]]; then
+    echo "[install-openhop] Applying SPI0 hardware-CS DTB overlay..."
+
+    # Skip if already patched, which it shouldn't be lol? but who knows, amirite
+    if dtc -I dtb -O dts "$DTB" 2>/dev/null | grep -q "cs-gpios"; then
+        echo "[install-openhop]   DTB already patched (cs-gpios present) — skipping"
+    elif ! command -v fdtoverlay &>/dev/null; then
+        echo "[install-openhop]   WARNING: fdtoverlay not available — skipping DTB overlay"
+    else
+        OVERLAY_DTBO="$(mktemp --suffix=.dtbo)"
+        MERGED="$(mktemp --suffix=.dtb)"
+
+        dtc -@ -I dts -O dtb -o "$OVERLAY_DTBO" "$OVERLAY_DTS" 2>/dev/null
+
+        cp "$DTB" "${DTB}.orig"
+        if fdtoverlay -i "$DTB" -o "$MERGED" "$OVERLAY_DTBO" \
+           && [[ -s "$MERGED" ]] \
+           && dtc -I dtb -O dts "$MERGED" 2>/dev/null | grep -q "cs-gpios"; then
+            mv "$MERGED" "$DTB"
+            echo "[install-openhop]   DTB patched: cs-gpios active, backup at ${DTB}.orig"
+        else
+            echo "[install-openhop]   WARNING: overlay merge failed — keeping original DTB"
+            cp "${DTB}.orig" "$DTB"
+        fi
+        rm -f "$OVERLAY_DTBO" "$MERGED"
+    fi
+elif [[ ! -f "$DTB" ]]; then
+    echo "[install-openhop]   DTB not found ($DTB) — skipping overlay"
 fi
 
 echo "[install-openhop] Installation complete"

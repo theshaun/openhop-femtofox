@@ -95,37 +95,42 @@ if [[ -f /etc/openhop_repeater/config.yaml ]]; then
     echo "[install-openhop] Apply default config.yaml"
 fi
 
-# Merges the spi0-hw-cs overlay into the board DTB so the SPI framework
+# Merges SPI0 overlay into the board DTB so the SPI framework
 # drives CS0 via cs-gpios instead of the driver bit-banging it because RightUp wouldn't shut up about trying it.
 # I am pretty sure the guy never sleeps either, too busy thinking about all the bit-banging
-OVERLAY_DTS="${SCRIPT_DIR}/spi0-hw-cs.dts"
-DTB="/boot/dtb-$(uname -r)/rv1103g-luckfox-pico-mini.dtb"
+DTB=$(find /boot/dtb-* -name "rv1103g-luckfox-pico-mini.dtb" 2>/dev/null | head -1)
 
-if [[ -f "$OVERLAY_DTS" && -f "$DTB" ]]; then
+if [[ -f "$DTB" ]]; then
     echo "[install-openhop] Applying SPI0 hardware-CS DTB overlay..."
 
     # Skip if already patched, which it shouldn't be lol? but who knows, amirite
     if dtc -I dtb -O dts "$DTB" 2>/dev/null | grep -q "cs-gpios"; then
         echo "[install-openhop]   DTB already patched (cs-gpios present) — skipping"
-    elif ! command -v fdtoverlay &>/dev/null; then
-        echo "[install-openhop]   WARNING: fdtoverlay not available — skipping DTB overlay"
+    elif ! command -v dtc &>/dev/null; then
+        echo "[install-openhop]   WARNING: dtc not available — skipping DTB overlay"
     else
-        OVERLAY_DTBO="$(mktemp --suffix=.dtbo)"
-        MERGED="$(mktemp --suffix=.dtb)"
-
-        dtc -@ -I dts -O dtb -o "$OVERLAY_DTBO" "$OVERLAY_DTS" 2>/dev/null
-
         cp "$DTB" "${DTB}.orig"
-        if fdtoverlay -i "$DTB" -o "$MERGED" "$OVERLAY_DTBO" \
-           && [[ -s "$MERGED" ]] \
-           && dtc -I dtb -O dts "$MERGED" 2>/dev/null | grep -q "cs-gpios"; then
-            mv "$MERGED" "$DTB"
+        TMP_DTS="$(mktemp --suffix=.dts)"
+
+        dtc -I dtb -O dts "$DTB" > "$TMP_DTS" 2>/dev/null
+        # and then I sed, hey lets muddle up the DTB with a sed, because why not!
+        # it's not like this is a production system or anything, just a little hobby project for some bit-banging fun, right? RightUp would be proud.
+        sed -i $'s|pinctrl-0 = <0x48 0x49 0x4a 0x4b>;|pinctrl-0 = <0x48 0x49 0x4a>;\\n\t\tcs-gpios = <0x36 0x10 0x00>;|' "$TMP_DTS"
+        sed -i $'s|fbtft@0 {|fbtft@0 {\\n\t\t\tstatus = "disabled";|' "$TMP_DTS"
+
+        dtc -I dts -O dtb "$TMP_DTS" > "${DTB}.new" 2>/dev/null
+        rm -f "$TMP_DTS"
+
+        VERIFY_CS=$(dtc -I dtb -O dts "${DTB}.new" 2>/dev/null | grep -c "cs-gpios")
+
+        if [[ "${VERIFY_CS:-0}" -gt 0 ]]; then
+            mv "${DTB}.new" "$DTB"
             echo "[install-openhop]   DTB patched: cs-gpios active, backup at ${DTB}.orig"
         else
-            echo "[install-openhop]   WARNING: overlay merge failed — keeping original DTB"
+            echo "[install-openhop]   WARNING: DTB patch failed — restoring original"
+            rm -f "${DTB}.new"
             cp "${DTB}.orig" "$DTB"
         fi
-        rm -f "$OVERLAY_DTBO" "$MERGED"
     fi
 elif [[ ! -f "$DTB" ]]; then
     echo "[install-openhop]   DTB not found ($DTB) — skipping overlay"

@@ -13,11 +13,9 @@ if [[ -d /tmp/overlay ]]; then
     cp -a /tmp/overlay/. /
     chown -R root:root /etc/sudoers.d /etc/systemd/system /etc/polkit-1 /etc/network /etc/udev /etc/hostname /etc/openhop_repeater /usr/local/bin /usr/local/lib 2>/dev/null || true
     chmod 440 /etc/sudoers.d/* 2>/dev/null || true
-    # polkit refuses to load .rules files that are group/world-writable.
-    # Source files come from /tmp/overlay (often 0777 on NTFS-mounted
-    # build dirs), so force 0644 here or the rule silently won't apply.
     chmod 644 /etc/polkit-1/rules.d/*.rules 2>/dev/null || true
     chmod 755 /usr/local/bin/*.sh 2>/dev/null || true
+    chmod 755 /usr/local/bin/openhop-* 2>/dev/null || true
 fi
 
 if [[ ! -d "${BUILD_SCRIPTS}" ]]; then
@@ -166,13 +164,12 @@ rm -f /etc/apt/apt.conf.d/02-armbian-periodic 2>/dev/null || true
 echo 'APT::Periodic::Update-Package-Lists "0";' > /etc/apt/apt.conf.d/02-armbian-periodic
 echo 'APT::Periodic::Unattended-Upgrade "0";' >> /etc/apt/apt.conf.d/02-armbian-periodic
 
-chmod -x /etc/update-motd.d/15-ap-info 2>/dev/null || true
-chmod -x /etc/update-motd.d/20-ip-info 2>/dev/null || true
-chmod -x /etc/update-motd.d/25-containers-info 2>/dev/null || true
-chmod -x /etc/update-motd.d/35-armbian-tips 2>/dev/null || true
-chmod -x /etc/update-motd.d/41-commands 2>/dev/null || true
-chmod -x /etc/update-motd.d/10-armbian-header 2>/dev/null || true
-chmod +x /etc/update-motd.d/10-femtofox-header 2>/dev/null || true
+for f in /etc/update-motd.d/*; do
+    case "$(basename "$f")" in
+        10-femtofox-header|15-ap-info|20-ip-info) continue ;;
+    esac
+    rm -f "$f"
+done
 
 echo "  Remaining cron jobs:"
 ls -la /etc/cron.daily/ /etc/cron.weekly/ /etc/cron.hourly/ 2>/dev/null

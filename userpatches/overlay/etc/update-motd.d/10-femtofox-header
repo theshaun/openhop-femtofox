@@ -35,4 +35,10 @@ cat <<'EOF'
 
          openHop Repeater FemtoFox  |  Based on Armbian Linux
 
+  Commands:
+    openhop-version   Show installed versions
+    openhop-manage    Manage openHop
+    htop              Monitor system resources
+    armbian-config    Configure Armbian
+
 EOF

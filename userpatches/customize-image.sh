@@ -138,6 +138,14 @@ systemctl enable openhop-repeater.service
 systemctl enable openhop-first-boot.service
 systemctl disable openhop-repeater.service 2>/dev/null || true
 
+echo "Installing Tailscale (disabled by default)..."
+curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian bookworm main" > /etc/apt/sources.list.d/tailscale.list
+apt-get update -qq
+apt-get install -y --no-install-recommends tailscale
+systemctl disable tailscaled.service 2>/dev/null || true
+echo "  Tailscale installed. Enable with: sudo systemctl enable --now tailscaled && sudo tailscale up"
+
 echo ""
 echo "[8/10] Pre-generating SSH host keys..."
 rm -f /etc/ssh/ssh_host_*

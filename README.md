@@ -56,6 +56,24 @@ sudo systemctl restart openhop-repeater
 sudo journalctl -u openhop-repeater -f
 ```
 
+### Useful Commands
+
+| Command | Description |
+|---------|-------------|
+| `openhop-version` | Show installed versions (Armbian, openHop, kernel) |
+| `openhop-manage` | Manage openHop (install/upgrade/uninstall) |
+| `htop` | Monitor system resources |
+| `armbian-config` | Configure Armbian |
+
+### Tailscale (VPN)
+
+Tailscale is pre-installed but disabled. To enable remote access:
+
+```bash
+sudo systemctl enable --now tailscaled
+sudo tailscale up
+```
+
 ### Radio Configuration
 
 Radio hardware profiles are in `/opt/openhop_repeater/openhop_repeater/radio-settings.json`:

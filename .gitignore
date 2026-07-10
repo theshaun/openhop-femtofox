@@ -1,5 +1,6 @@
 logs/
 output/
+output-fresh/
 .vscode/
 .ccache/
 .omo/

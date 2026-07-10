@@ -1,0 +1,32 @@
+#!/bin/bash
+# Print version info for all openHop Femtofox components.
+
+VENV=/opt/openhop_repeater/venv
+BUILD_VER=$(cat /etc/openhop-build-version 2>/dev/null || echo "unknown")
+KERNEL=$(uname -r)
+
+if [ -f /etc/armbian-release ]; then
+    source /etc/armbian-release 2>/dev/null
+    ARMBIAN_VER="${VERSION:-unknown}"
+    BOARD="${BOARD:-unknown}"
+else
+    ARMBIAN_VER="unknown"
+    BOARD="unknown"
+fi
+
+pkg_version() {
+    local dir
+    dir=$(ls -d "${VENV}/lib"/python*/site-packages/"${1}"-*.dist-info 2>/dev/null | head -1)
+    [ -n "$dir" ] && basename "$dir" | sed "s/${1}-\(.*\)\.dist-info/\1/"
+}
+
+REPEATER_VER=$(pkg_version openhop_repeater)
+CORE_VER=$(pkg_version openhop_core)
+
+echo "openHop Repeater for Femtofox"
+echo "  Image build:        ${BUILD_VER}"
+echo "  Armbian:            ${ARMBIAN_VER}"
+echo "  Kernel:             ${KERNEL}"
+echo "  Board:              ${BOARD}"
+echo "  openHop Repeater:   ${REPEATER_VER:-not installed}"
+echo "  openHop Core:       ${CORE_VER:-not installed}"

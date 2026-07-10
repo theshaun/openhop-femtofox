@@ -80,6 +80,8 @@ echo "[install-openhop] Pre-compiling optimized bytecode..."
     echo "[install-openhop] WARNING: bytecode compile incomplete, Python will compile on first import"
 
 chown -R repeater:repeater "${INSTALL_DIR}"
+# let all users see the installed files, but only the repeater user can write to them
+chmod -R a+rX /opt/openhop_repeater
 
 RADIO_SETTINGS="${SCRIPT_DIR}/radio-settings.json"
 

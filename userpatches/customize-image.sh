@@ -34,6 +34,9 @@ if [[ -f config.env ]]; then
     echo "  SWAP:     ${SWAP_SIZE_MB}MB"
 fi
 
+echo "$(date +%Y.%m).${BUILD_REVISION:-1}" > /etc/openhop-build-version
+chmod +x /usr/local/bin/openhop-version 2>/dev/null || true
+
 echo ""
 echo "[1/10] Configuring hostname..."
 echo "${HOSTNAME:-femtofox}" > /etc/hostname

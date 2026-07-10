@@ -97,6 +97,18 @@ if [[ -f /etc/openhop_repeater/config.yaml ]]; then
     echo "[install-openhop] Apply default config.yaml"
 fi
 
+CONSOLE_DIR="/opt/pymc_console"
+CONSOLE_UI="${CONSOLE_DIR}/web/html"
+
+echo "[install-openhop] Installing openHop Console dashboard..."
+git clone --depth 1 https://github.com/Treehouse-00/pymc_console-dist.git "${CONSOLE_DIR}" 2>/dev/null
+mkdir -p "${CONSOLE_DIR}/web"
+cp -r "${CONSOLE_DIR}/frontend/dist" "${CONSOLE_UI}"
+chown -R repeater:repeater "${CONSOLE_DIR}"
+echo "[install-openhop] Console dashboard installed at ${CONSOLE_UI}"
+echo "[install-openhop]   Enable: sudo yq -i '.web.web_path = \"/opt/pymc_console/web/html\"' /etc/openhop_repeater/config.yaml"
+echo "[install-openhop]   Update: sudo bash ${CONSOLE_DIR}/manage.sh upgrade"
+
 # Merges SPI0 overlay into the board DTB so the SPI framework
 # drives CS0 via cs-gpios instead of the driver bit-banging it because RightUp wouldn't shut up about trying it.
 # I am pretty sure the guy never sleeps either, too busy thinking about all the bit-banging

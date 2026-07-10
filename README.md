@@ -74,6 +74,16 @@ sudo systemctl enable --now tailscaled
 sudo tailscale up
 ```
 
+### openHop/pyMC Console (Dashboard)
+
+The [openHop/pyMC Console](https://github.com/Treehouse-00/pymc_console-dist) React dashboard is pre-installed at `/opt/pymc_console/web/html/` but not enabled. 
+
+To update the dashboard later:
+
+```bash
+sudo bash /opt/pymc_console/manage.sh upgrade
+```
+
 ### Radio Configuration
 
 Radio hardware profiles are in `/opt/openhop_repeater/openhop_repeater/radio-settings.json`:

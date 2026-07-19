@@ -114,6 +114,7 @@ mkdir -p \"\${OUTPUT_DIR}\"
     BUILD_DESKTOP=no \
     KERNEL_CONFIGURE=no \
     KERNEL_GIT=shallow \
+    LEGACY_DEBOOTSTRAP=yes \
     COMPRESS_OUTPUTIMAGE=sha,img
 
 BUILD_EXIT=\$?

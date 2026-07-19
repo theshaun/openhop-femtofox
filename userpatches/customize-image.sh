@@ -91,8 +91,43 @@ fi
 PROFILEEOF
 
 echo ""
-echo "[4/10] Configuring swap..."
+echo "[4/10] Configuring swap and /tmp storage..."
 bash "${BUILD_SCRIPTS}/setup-swap.sh"
+
+# Armbian ships /tmp as tmpfs size=50% of RAM — only ~27MB on the 64MB Femtofox,
+# which is too small for anything useful.. We want /tmp to be a normal disk-backed directory, not tmpfs.
+if grep -qE '^[^#].*[[:space:]]/tmp[[:space:]].*tmpfs' /etc/fstab; then
+    cp -a /etc/fstab /etc/fstab.orig.tmpfs-tmp
+    sed -i '/^[^#].*[[:space:]]\/tmp[[:space:]].*tmpfs/d' /etc/fstab
+    echo "  Stripped tmpfs /tmp line from /etc/fstab (backup: /etc/fstab.orig.tmpfs-tmp)"
+else
+    echo "  No tmpfs /tmp line in /etc/fstab — nothing to strip"
+fi
+
+# Armbian also ships tmp.mount enabled by default, which mounts /tmp as
+# tmpfs regardless of fstab. Mask it so systemd can't auto-mount it.
+if systemctl cat tmp.mount >/dev/null 2>&1 && \
+   [[ "$(systemctl is-enabled tmp.mount 2>&1 || true)" != "masked" ]]; then
+    systemctl mask tmp.mount
+    echo "  Masked tmp.mount so systemd can't remount /tmp as tmpfs"
+else
+    echo "  tmp.mount already masked or not present — nothing to mask"
+fi
+
+# Armbian also runs armbian-zram-config at boot, which creates /dev/zram0
+# and mounts it at /tmp (25MB on this box, ruining the RAM left).
+# Femtofox ships 256M of SD-backed swap from setup-swap.sh, so we don't need
+# zram apart from to protect the SD card from excessive writes... mm oh well
+if [[ -f /etc/default/armbian-zram-config ]]; then
+    sed -i 's/^ENABLED=.*/ENABLED=false/' /etc/default/armbian-zram-config
+    echo "  Set ENABLED=false in /etc/default/armbian-zram-config"
+elif systemctl cat armbian-zram-config.service >/dev/null 2>&1 && \
+     [[ "$(systemctl is-enabled armbian-zram-config.service 2>&1 || true)" != "masked" ]]; then
+    systemctl mask armbian-zram-config.service
+    echo "  Masked armbian-zram-config.service (no config file present)"
+else
+    echo "  armbian-zram-config already disabled or not present"
+fi
 
 echo ""
 echo "[5/10] Installing openHop Repeater..."

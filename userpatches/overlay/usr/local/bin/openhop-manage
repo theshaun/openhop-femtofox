@@ -3,4 +3,8 @@ if [ "$(id -u)" -ne 0 ]; then
     exec sudo bash "$0" "$@"
 fi
 
-bash /opt/openhop_repeater/openhop_repeater/manage.sh "$@"
+exec env \
+    GIT_CONFIG_COUNT=1 \
+    GIT_CONFIG_KEY_0=safe.directory \
+    GIT_CONFIG_VALUE_0=/opt/openhop_repeater/openhop_repeater \
+    bash /opt/openhop_repeater/openhop_repeater/manage.sh "$@"
